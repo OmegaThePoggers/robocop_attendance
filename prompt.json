@@ -1,0 +1,179 @@
+{
+  "project_name": "Face Recognition Attendance System",
+  "build_strategy": "Incremental, chunk-based development. Do NOT proceed to the next chunk until the current chunk is complete, validated, and approved.",
+  "global_constraints": {
+    "python_version": "3.9.x only",
+    "backend_framework": "FastAPI",
+    "frontend_framework": "React",
+    "face_recognition_library": "face-recognition (dlib)",
+    "processing_mode": "CPU-first",
+    "no_cloud_services": true
+  },
+  "chunks": [
+    {
+      "chunk_id": 1,
+      "title": "Project Skeleton & Environment",
+      "goal": "Create a clean, runnable project structure for backend and frontend.",
+      "tasks": [
+        "Initialize backend with FastAPI",
+        "Create src/ layout and pyproject.toml",
+        "Set up Python virtual environment compatibility",
+        "Create minimal React frontend scaffold",
+        "Verify backend and frontend run independently"
+      ],
+      "deliverables": [
+        "Backend folder structure",
+        "pyproject.toml",
+        "Basic FastAPI app with /health endpoint",
+        "React app that renders a placeholder page"
+      ],
+      "validation": [
+        "Backend starts without errors",
+        "GET /health returns 200",
+        "Frontend runs and renders in browser"
+      ],
+      "stop_after": true
+    },
+    {
+      "chunk_id": 2,
+      "title": "Student Dataset & Embedding Cache",
+      "goal": "Load student images and precompute face embeddings.",
+      "tasks": [
+        "Define students directory structure",
+        "Implement embedding extraction",
+        "Cache embeddings in memory or file",
+        "Handle multiple images per student",
+        "Fail gracefully if no face or multiple faces detected"
+      ],
+      "deliverables": [
+        "Embedding loader module",
+        "Data structure mapping student → embeddings",
+        "Startup hook that loads embeddings"
+      ],
+      "validation": [
+        "Embeddings load on server start",
+        "Each student has ≥1 embedding",
+        "Server fails fast on invalid dataset"
+      ],
+      "stop_after": true
+    },
+    {
+      "chunk_id": 3,
+      "title": "Image-Based Face Recognition",
+      "goal": "Recognize faces from a single uploaded image.",
+      "tasks": [
+        "Implement image upload endpoint",
+        "Detect all faces in image",
+        "Generate embeddings for detected faces",
+        "Match embeddings against known students",
+        "Apply distance threshold"
+      ],
+      "deliverables": [
+        "POST /recognize/image endpoint",
+        "JSON response with detected faces and names",
+        "Bounding box coordinates"
+      ],
+      "validation": [
+        "Correct recognition on known faces",
+        "Unknown faces labeled as 'Unknown'",
+        "Multiple faces handled correctly"
+      ],
+      "stop_after": true
+    },
+    {
+      "chunk_id": 4,
+      "title": "Video Frame Sampling & Recognition",
+      "goal": "Recognize faces from short videos using multi-frame consensus.",
+      "tasks": [
+        "Accept video uploads",
+        "Extract frames at 1 FPS",
+        "Detect and recognize faces per frame",
+        "Aggregate results across frames",
+        "Finalize identity via majority voting"
+      ],
+      "deliverables": [
+        "POST /recognize/video endpoint",
+        "Frame sampling logic",
+        "Aggregated recognition output"
+      ],
+      "validation": [
+        "Video ≤15 seconds processed under 5 seconds",
+        "Faces confirmed across multiple frames",
+        "False positives minimized"
+      ],
+      "stop_after": true
+    },
+    {
+      "chunk_id": 5,
+      "title": "Attendance Logic & Persistence",
+      "goal": "Convert recognition results into attendance records.",
+      "tasks": [
+        "Define attendance schema",
+        "Implement attendance marking logic",
+        "Store records in SQLite",
+        "Prevent duplicate entries per day"
+      ],
+      "deliverables": [
+        "Attendance service module",
+        "SQLite database",
+        "POST /attendance/mark endpoint"
+      ],
+      "validation": [
+        "One entry per student per day",
+        "Correct present/absent marking",
+        "Data persists across restarts"
+      ],
+      "stop_after": true
+    },
+    {
+      "chunk_id": 6,
+      "title": "Frontend Integration",
+      "goal": "Connect React UI to backend APIs.",
+      "tasks": [
+        "Upload image/video from UI",
+        "Display recognition results",
+        "Show attendance table",
+        "Handle loading and error states"
+      ],
+      "deliverables": [
+        "File upload UI",
+        "Results visualization",
+        "Attendance summary view"
+      ],
+      "validation": [
+        "End-to-end flow works",
+        "UI does not freeze during processing",
+        "Errors shown clearly"
+      ],
+      "stop_after": true
+    },
+    {
+      "chunk_id": 7,
+      "title": "Polish, Safety & Documentation",
+      "goal": "Make the system robust and presentable.",
+      "tasks": [
+        "Add input validation",
+        "Limit file size and duration",
+        "Add README with setup steps",
+        "Add basic logging"
+      ],
+      "deliverables": [
+        "README.md",
+        "Configurable thresholds",
+        "Clean error handling"
+      ],
+      "validation": [
+        "Project can be set up from scratch",
+        "All features work as documented"
+      ],
+      "stop_after": true
+    }
+  ],
+  "rules_for_ai": [
+    "Do NOT implement future chunks early",
+    "Ask for explicit approval before continuing",
+    "Do NOT refactor previous chunks unless requested",
+    "Explain assumptions clearly",
+    "Prefer clarity over cleverness"
+  ]
+}
