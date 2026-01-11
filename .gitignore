@@ -19,3 +19,14 @@ dist/
 
 # Logs
 *.log
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Dataset (optional: if you want to keep images local only)
+# backend/dataset/
+

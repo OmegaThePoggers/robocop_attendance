@@ -1,0 +1,8 @@
+pyproject.toml
+src/embedding_loader.py
+src/main.py
+src/face_recognition_attendance_backend.egg-info/PKG-INFO
+src/face_recognition_attendance_backend.egg-info/SOURCES.txt
+src/face_recognition_attendance_backend.egg-info/dependency_links.txt
+src/face_recognition_attendance_backend.egg-info/requires.txt
+src/face_recognition_attendance_backend.egg-info/top_level.txt

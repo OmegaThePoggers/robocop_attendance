@@ -4,7 +4,8 @@ import numpy as np
 from typing import Dict, List, Tuple
 
 # Define the path to the dataset directory
-DATASET_DIR = "dataset"
+# Assuming structure: project_root/backend/src/embedding_loader.py and project_root/dataset
+DATASET_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "dataset")
 
 class EmbeddingLoader:
     def __init__(self):
@@ -26,12 +27,12 @@ class EmbeddingLoader:
                 continue
 
             print(f"Processing student: {student_name}")
-            self.student_embeddings[student_name] = []
-            
             image_files = [f for f in os.listdir(student_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
             if not image_files:
                 print(f"Warning: No image files found for student '{student_name}'. Skipping.")
                 continue
+
+            self.student_embeddings[student_name] = []
 
             for image_file in image_files:
                 image_path = os.path.join(student_dir, image_file)

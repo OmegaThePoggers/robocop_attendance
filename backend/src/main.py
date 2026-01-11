@@ -1,9 +1,10 @@
 from fastapi import FastAPI
+from typing import Optional
 from .embedding_loader import EmbeddingLoader
 
 app = FastAPI()
 
-embedding_loader: EmbeddingLoader | None = None
+embedding_loader: Optional[EmbeddingLoader] = None
 
 @app.on_event("startup")
 async def startup_event():
