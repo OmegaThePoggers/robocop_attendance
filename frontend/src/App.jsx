@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AttendanceTable from './components/AttendanceTable';
 import RecognitionPanel from './components/RecognitionPanel';
 import AbsenteeList from './components/AbsenteeList';
@@ -6,9 +6,10 @@ import SessionHistory from './components/SessionHistory';
 import { createSession, getActiveSession, endSession } from './api';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('live');
+  const [activeTab, setActiveTab] = useState('history');
   const [session, setSession] = useState(null);
   const [newSessionName, setNewSessionName] = useState('');
+  const prevSessionRef = useRef(null);
 
   const fetchSession = async () => {
     const s = await getActiveSession();
@@ -21,17 +22,27 @@ function App() {
     return () => clearInterval(i);
   }, []);
 
+  // Watch for session changes to auto-switch tabs
+  useEffect(() => {
+    if (session && !prevSessionRef.current) {
+      setActiveTab('live');
+    }
+    prevSessionRef.current = session;
+  }, [session]);
+
   const handleStartSession = async () => {
     if (!newSessionName) return;
     await createSession(newSessionName);
     setNewSessionName('');
-    fetchSession();
+    await fetchSession();
+    setActiveTab('live');
   }
 
   const handleEndSession = async () => {
     if (confirm('Are you sure you want to end this session?')) {
       await endSession();
-      fetchSession();
+      await fetchSession();
+      setActiveTab('history');
     }
   }
 
@@ -87,29 +98,33 @@ function App() {
         </div>
         <div className="lg:col-span-7 h-full flex flex-col">
           <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setActiveTab('live')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'live'
-                  ? 'bg-robocop-700 text-white shadow-lg border border-robocop-500'
-                  : 'text-slate-400 hover:text-white hover:bg-robocop-800'
-                }`}
-            >
-              Live Log
-            </button>
-            <button
-              onClick={() => setActiveTab('absent')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'absent'
-                  ? 'bg-red-900/40 text-red-200 shadow-lg border border-red-500/50'
-                  : 'text-slate-400 hover:text-red-200 hover:bg-red-900/20'
-                }`}
-            >
-              Absentees
-            </button>
+            {session && (
+              <>
+                <button
+                  onClick={() => setActiveTab('live')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'live'
+                    ? 'bg-robocop-700 text-white shadow-lg border border-robocop-500'
+                    : 'text-slate-400 hover:text-white hover:bg-robocop-800'
+                    }`}
+                >
+                  Live Log
+                </button>
+                <button
+                  onClick={() => setActiveTab('absent')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'absent'
+                    ? 'bg-red-900/40 text-red-200 shadow-lg border border-red-500/50'
+                    : 'text-slate-400 hover:text-red-200 hover:bg-red-900/20'
+                    }`}
+                >
+                  Absentees
+                </button>
+              </>
+            )}
             <button
               onClick={() => setActiveTab('history')}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'history'
-                  ? 'bg-robocop-800 text-robocop-200 shadow-lg border border-robocop-600'
-                  : 'text-slate-400 hover:text-white hover:bg-robocop-800'
+                ? 'bg-robocop-800 text-robocop-200 shadow-lg border border-robocop-600'
+                : 'text-slate-400 hover:text-white hover:bg-robocop-800'
                 }`}
             >
               History
@@ -117,9 +132,15 @@ function App() {
           </div>
 
           <div className="flex-1 overflow-hidden">
-            {activeTab === 'live' && <AttendanceTable />}
-            {activeTab === 'absent' && <AbsenteeList />}
+            {activeTab === 'live' && session && <AttendanceTable />}
+            {activeTab === 'absent' && session && <AbsenteeList />}
             {activeTab === 'history' && <SessionHistory />}
+            {(!session && activeTab !== 'history') && (
+              <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-robocop-800/30 rounded-xl border border-robocop-800 border-dashed">
+                <p className="text-lg">No Active Session</p>
+                <p className="text-sm">Start a session to view live data.</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

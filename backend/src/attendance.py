@@ -77,9 +77,18 @@ class AttendanceService:
             print(f"Attendance marked for {student_name} in session {session_id}")
             return new_record
 
-    def get_recent_records(self, limit: int = 20) -> List[AttendanceRecord]:
+    def get_recent_records(self, limit: int = 50) -> List[AttendanceRecord]:
         with Session(engine) as session:
-            statement = select(AttendanceRecord).order_by(AttendanceRecord.timestamp.desc()).limit(limit)
+            # Only get records for the currently active session
+            active = session.exec(select(AttendanceSession).where(AttendanceSession.is_active == True)).first()
+            
+            if not active:
+                return []
+                
+            statement = select(AttendanceRecord).where(
+                AttendanceRecord.session_id == active.id
+            ).order_by(AttendanceRecord.timestamp.desc()).limit(limit)
+            
             results = session.exec(statement).all()
             return results
 
