@@ -50,6 +50,10 @@ async def startup_event():
     attendance_service = AttendanceService()
     print("AttendanceService initialized.")
 
+@app.get("/")
+def read_root():
+    return {"message": "Robocop Attendance Backend is running. Go to /docs for API documentation."}
+
 @app.get("/health")
 def read_health():
     return {"status": "ok"}
@@ -71,6 +75,26 @@ def get_active_session():
     if not attendance_service:
         raise HTTPException(status_code=500, detail="Services not initialized")
     return attendance_service.get_active_session()
+
+@app.post("/sessions/end")
+def end_session():
+    if not attendance_service:
+        raise HTTPException(status_code=500, detail="Services not initialized")
+    return attendance_service.end_active_session()
+
+@app.get("/sessions")
+def get_session_history():
+    if not attendance_service:
+        raise HTTPException(status_code=500, detail="Services not initialized")
+    return attendance_service.get_session_history()
+
+@app.get("/sessions/{session_id}/report")
+def get_session_report(session_id: int):
+    if not attendance_service or not embedding_loader:
+        raise HTTPException(status_code=500, detail="Services not initialized")
+    
+    all_students = list(embedding_loader.student_embeddings.keys())
+    return attendance_service.get_session_report(session_id, all_students)
 
 @app.post("/attendance/manual")
 def manual_mark(student_name: str, session_id: int):

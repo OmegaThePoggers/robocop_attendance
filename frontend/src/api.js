@@ -39,6 +39,32 @@ export async function getActiveSession() {
     }
 }
 
+export async function endSession() {
+    const response = await fetch(`${API_URL}/sessions/end`, { method: 'POST' });
+    if (!response.ok) throw new Error('Failed to end session');
+    return await response.json();
+}
+
+export async function getSessionHistory() {
+    try {
+        const response = await fetch(`${API_URL}/sessions`);
+        if (!response.ok) throw new Error('Failed to fetch history');
+        return await response.json();
+    } catch {
+        return [];
+    }
+}
+
+export async function getSessionReport(sessionId) {
+    try {
+        const response = await fetch(`${API_URL}/sessions/${sessionId}/report`);
+        if (!response.ok) throw new Error('Failed to fetch report');
+        return await response.json();
+    } catch {
+        return null;
+    }
+}
+
 export async function manualMark(studentName, sessionId) {
     const response = await fetch(`${API_URL}/attendance/manual?student_name=${encodeURIComponent(studentName)}&session_id=${sessionId}`, { method: 'POST' });
     if (!response.ok) throw new Error('Failed to mark manually');

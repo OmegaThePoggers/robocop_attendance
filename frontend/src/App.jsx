@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import AttendanceTable from './components/AttendanceTable';
 import RecognitionPanel from './components/RecognitionPanel';
 import AbsenteeList from './components/AbsenteeList';
-import { createSession, getActiveSession } from './api';
+import SessionHistory from './components/SessionHistory';
+import { createSession, getActiveSession, endSession } from './api';
 
 function App() {
   const [activeTab, setActiveTab] = useState('live');
@@ -27,6 +28,13 @@ function App() {
     fetchSession();
   }
 
+  const handleEndSession = async () => {
+    if (confirm('Are you sure you want to end this session?')) {
+      await endSession();
+      fetchSession();
+    }
+  }
+
   return (
     <div className="min-h-screen bg-robocop-900 text-slate-200 p-4 md:p-8">
       <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -42,8 +50,16 @@ function App() {
 
         <div className="bg-robocop-800 p-2 rounded-lg border border-robocop-700 flex items-center gap-2">
           {session ? (
-            <div className="px-4 py-2 text-green-400 font-mono font-bold animate-pulse">
-              🟢 LIVE: {session.name}
+            <div className="flex items-center gap-4">
+              <div className="px-4 py-2 text-green-400 font-mono font-bold animate-pulse">
+                🟢 LIVE: {session.name}
+              </div>
+              <button
+                onClick={handleEndSession}
+                className="bg-red-900/50 hover:bg-red-600 text-red-200 hover:text-white border border-red-700 px-4 py-1 rounded text-sm font-bold shadow-lg transition-all"
+              >
+                END SESSION
+              </button>
             </div>
           ) : (
             <>
@@ -83,16 +99,27 @@ function App() {
             <button
               onClick={() => setActiveTab('absent')}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'absent'
-                  ? 'bg-red-900/40 text-red-200 shadow-lg border border-red-500'
+                  ? 'bg-red-900/40 text-red-200 shadow-lg border border-red-500/50'
                   : 'text-slate-400 hover:text-red-200 hover:bg-red-900/20'
                 }`}
             >
               Absentees
             </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'history'
+                  ? 'bg-robocop-800 text-robocop-200 shadow-lg border border-robocop-600'
+                  : 'text-slate-400 hover:text-white hover:bg-robocop-800'
+                }`}
+            >
+              History
+            </button>
           </div>
 
           <div className="flex-1 overflow-hidden">
-            {activeTab === 'live' ? <AttendanceTable /> : <AbsenteeList />}
+            {activeTab === 'live' && <AttendanceTable />}
+            {activeTab === 'absent' && <AbsenteeList />}
+            {activeTab === 'history' && <SessionHistory />}
           </div>
         </div>
       </main>

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from typing import List, Optional
-from sqlmodel import Session, select
+from typing import List, Optional, Set, Dict
+from sqlmodel import Session, select, func
 from .models import AttendanceRecord, AttendanceSession
 from .database import engine
 
@@ -23,9 +23,24 @@ class AttendanceService:
             session.refresh(new_session)
             return new_session
 
+    def end_active_session(self) -> Optional[AttendanceSession]:
+        with Session(engine) as session:
+            active = session.exec(select(AttendanceSession).where(AttendanceSession.is_active == True)).first()
+            if active:
+                active.is_active = False
+                active.end_time = datetime.utcnow()
+                session.add(active)
+                session.commit()
+                session.refresh(active)
+            return active
+
     def get_active_session(self) -> Optional[AttendanceSession]:
         with Session(engine) as session:
              return session.exec(select(AttendanceSession).where(AttendanceSession.is_active == True)).first()
+
+    def get_session_history(self) -> List[AttendanceSession]:
+        with Session(engine) as session:
+            return session.exec(select(AttendanceSession).where(AttendanceSession.is_active == False).order_by(AttendanceSession.created_at.desc())).all()
 
     def mark_attendance(self, student_name: str, confidence: float = 0.0, session_id: Optional[int] = None) -> Optional[AttendanceRecord]:
         """
@@ -85,3 +100,24 @@ class AttendanceService:
             absentees.sort()
             print(f"DEBUG: Absentees: {absentees}")
             return absentees
+
+    def get_session_report(self, session_id: int, all_students: List[str]) -> Dict[str, List[str]]:
+        with Session(engine) as session:
+            statement = select(AttendanceRecord.student_name).where(
+                AttendanceRecord.session_id == session_id
+            ).distinct()
+            
+            present_list = session.exec(statement).all()
+            present_set = set(present_list)
+            all_known = set(all_students)
+            
+            absent_list = list(all_known - present_set)
+            
+            # Sort for display
+            present_sorted = sorted(list(present_set))
+            absent_sorted = sorted(absent_list)
+            
+            return {
+                "present": present_sorted,
+                "absent": absent_sorted
+            }
