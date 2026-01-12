@@ -14,6 +14,7 @@ services:
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
+      - DATASET_PATH=/app/dataset
 
   frontend:
     build: 

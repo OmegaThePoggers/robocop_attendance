@@ -7,7 +7,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
-    libgl1-mesa-glx \
+    git \
+    libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -24,9 +25,8 @@ RUN uv sync
 
 # Copy application code
 COPY src/ src/
-COPY dataset/ dataset/
-# Note: In production, dataset might be better as a volume, but for "out of box" experience, copying is okay if small. 
-# However, usually we want dataset to be persistent. We'll rely on docker-compose volume for persistence.
+# COPY dataset/ dataset/ <-- Removed because usage of 'dataset' outside build context causes errors. 
+# We rely on the docker-compose volume to mount ./dataset to /app/dataset.
 
 # Expose port
 EXPOSE 8000

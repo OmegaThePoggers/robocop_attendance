@@ -4,8 +4,11 @@ import numpy as np
 from typing import Dict, List, Tuple
 
 # Define the path to the dataset directory
-# Assuming structure: project_root/backend/src/embedding_loader.py and project_root/dataset
-DATASET_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "dataset")
+# Priority: Env var -> Relative path
+DATASET_DIR = os.getenv("DATASET_PATH")
+if not DATASET_DIR:
+    # Assuming structure: project_root/backend/src/embedding_loader.py and project_root/dataset
+    DATASET_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "dataset")
 
 class EmbeddingLoader:
     def __init__(self):
@@ -60,7 +63,9 @@ class EmbeddingLoader:
                 del self.student_embeddings[student_name] # Remove student if no embeddings were loaded
 
         if not self.student_embeddings:
-            raise ValueError("No student embeddings were loaded. Please ensure the dataset is correctly populated.")
+            print("Warning: No student embeddings were loaded. System will start but no faces will be recognized.")
+            # Do not raise error, allow system to start empty
+            return
         
         print("Embeddings loading complete.")
 
