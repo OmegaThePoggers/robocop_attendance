@@ -20,7 +20,19 @@ A robust, session-based Face Recognition Attendance System built with **FastAPI*
 - **frontend/**: React application with Tailwind CSS.
 - **dataset/**: Directory containing face images for known students.
 
-## Quick Start
+## Quick Start (Docker) - Recommended 🐳
+
+Avoid installing dependencies manually by using Docker.
+
+1.  **Run with Docker Compose**:
+    ```bash
+    docker-compose up --build
+    ```
+2.  **Access:**
+    - Frontend: [http://localhost:5173](http://localhost:5173)
+    - Backend: [http://localhost:8000](http://localhost:8000)
+
+## Quick Start (Manual)
 
 ### 1. Backend Setup
 

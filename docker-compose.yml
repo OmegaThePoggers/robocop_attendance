@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist the database
+      - ./backend/attendance.db:/app/attendance.db
+      # Mount the dataset directory so user can add photos on host and they appear in container
+      - ./dataset:/app/dataset
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  frontend:
+    build: 
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      # Enable hot-reloading by mounting source code
+      - ./frontend/src:/app/src
+    environment:
+      # Tell Vite where the backend is (from browser perspective, it's localhost or the exposed port)
+      # But wait, Vite runs in browser. Browser sees localhost:8000.
+      # So we don't strictly need internal networking for the client-side calls.
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+# We assume "dataset" exists in the project root.
