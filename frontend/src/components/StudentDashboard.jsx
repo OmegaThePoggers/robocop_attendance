@@ -1,0 +1,146 @@
+import { useState, useEffect } from 'react';
+import { getSessionHistory, getMyAttendance, createDispute, getMyDisputes } from '../api';
+import { useNavigate } from 'react-router-dom';
+
+export default function StudentDashboard() {
+    const [sessions, setSessions] = useState([]);
+    const [myAttendance, setMyAttendance] = useState([]);
+    const [myDisputes, setMyDisputes] = useState([]);
+    const [selectedSessionId, setSelectedSessionId] = useState(null);
+    const [disputeReason, setDisputeReason] = useState("");
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        async function loadData() {
+            try {
+                // We need sessions to know what we missed
+                // Note: getSessionHistory requires teacher/admin currently? 
+                // Wait, backend allow_teacher_admin on get_session_history?
+                // I might need to open that up or make a public/student version.
+                // Start with what we have. If it fails, I'll need to update backend.
+                const s = await getSessionHistory();
+                setSessions(s);
+
+                const att = await getMyAttendance();
+                setMyAttendance(att);
+
+                const d = await getMyDisputes();
+                setMyDisputes(d);
+            } catch (e) {
+                console.error("Failed to load data", e);
+                // If 403, might need to fix backend permissions
+            }
+        }
+        loadData();
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        navigate('/login');
+    }
+
+    const handleSubmitDispute = async () => {
+        if (!selectedSessionId || !disputeReason) return;
+        try {
+            await createDispute(selectedSessionId, disputeReason);
+            alert("Dispute submitted successfully!");
+            setSelectedSessionId(null);
+            setDisputeReason("");
+            // Reload disputes
+            const d = await getMyDisputes();
+            setMyDisputes(d);
+        } catch (e) {
+            alert("Failed to sumbit dispute");
+        }
+    }
+
+    // Helper to check status
+    const getStatus = (sessionId) => {
+        const record = myAttendance.find(a => a.session_id === sessionId);
+        if (record) return { status: 'Present', color: 'text-green-400' };
+
+        // check disputes
+        const dispute = myDisputes.find(d => d.session_id === sessionId);
+        if (dispute) return { status: `Disputed (${dispute.status})`, color: 'text-orange-400' };
+
+        return { status: 'Absent', color: 'text-red-400' };
+    }
+
+    return (
+        <div className="min-h-screen bg-robocop-900 text-slate-200 p-8">
+            <header className="mb-8 flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-white">My Attendance</h1>
+                <button onClick={handleLogout} className="text-slate-400 hover:text-white">Logout</button>
+            </header>
+
+            <div className="bg-robocop-800 rounded-xl border border-robocop-700 overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-robocop-900/50 text-robocop-400 uppercase text-xs">
+                        <tr>
+                            <th className="p-4">Session Date</th>
+                            <th className="p-4">Session Name</th>
+                            <th className="p-4">Status</th>
+                            <th className="p-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-robocop-700">
+                        {sessions.map(session => {
+                            const { status, color } = getStatus(session.id);
+                            return (
+                                <tr key={session.id} className="hover:bg-robocop-700/50">
+                                    <td className="p-4">{new Date(session.created_at).toLocaleDateString()}</td>
+                                    <td className="p-4 text-white font-medium">{session.name}</td>
+                                    <td className={`p-4 font-bold ${color}`}>{status}</td>
+                                    <td className="p-4">
+                                        {status === 'Absent' && (
+                                            <button
+                                                onClick={() => setSelectedSessionId(session.id)}
+                                                className="text-xs bg-robocop-600 hover:bg-robocop-500 text-white px-3 py-1 rounded"
+                                            >
+                                                Dispute
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            )
+                        })}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Dispute Modal */}
+            {selectedSessionId && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4">
+                    <div className="bg-robocop-800 p-6 rounded-xl border border-robocop-600 max-w-md w-full">
+                        <h3 className="text-xl font-bold text-white mb-4">File Attendance Dispute</h3>
+                        <p className="text-sm text-slate-400 mb-4">
+                            Explain why you believe you were present for this session.
+                        </p>
+                        <textarea
+                            className="w-full bg-robocop-900 border border-robocop-700 rounded p-3 text-white focus:border-robocop-500 mb-4"
+                            rows="4"
+                            placeholder="I was sitting in the back right corner..."
+                            value={disputeReason}
+                            onChange={(e) => setDisputeReason(e.target.value)}
+                        />
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setSelectedSessionId(null)}
+                                className="text-slate-400 hover:text-white"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSubmitDispute}
+                                className="bg-robocop-500 hover:bg-robocop-400 text-white px-4 py-2 rounded font-bold"
+                            >
+                                Submit Dispute
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

@@ -12,5 +12,7 @@ dependencies = [
     "face-recognition-models @ git+https://github.com/ageitgey/face_recognition_models",
     "python-multipart",
     "opencv-python-headless",
-    "sqlmodel"
+    "sqlmodel",
+    "passlib[argon2]",
+    "python-jose[cryptography]"
 ]

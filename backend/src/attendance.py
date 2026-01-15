@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
+import json
 from typing import List, Optional, Set, Dict
 from sqlmodel import Session, select, func
-from .models import AttendanceRecord, AttendanceSession
+from .models import AttendanceRecord, AttendanceSession, UnknownFace
 from .database import engine
 
 class AttendanceService:
@@ -42,7 +43,13 @@ class AttendanceService:
         with Session(engine) as session:
             return session.exec(select(AttendanceSession).where(AttendanceSession.is_active == False).order_by(AttendanceSession.created_at.desc())).all()
 
-    def mark_attendance(self, student_name: str, confidence: float = 0.0, session_id: Optional[int] = None) -> Optional[AttendanceRecord]:
+    def mark_attendance(
+        self, 
+        student_name: str, 
+        confidence: float = 0.0, 
+        session_id: Optional[int] = None,
+        metadata: Optional[Dict] = None
+    ) -> Optional[AttendanceRecord]:
         """
         Marks attendance. Requires an active session ID (or finds one if not provided).
         """
@@ -67,10 +74,18 @@ class AttendanceService:
 
             if existing_record:
                 # Already marked for this session
+                # Optional: Update metadata if new confidence is better? 
+                # For now, first detection wins.
                 return None
 
             # Create new record
-            new_record = AttendanceRecord(student_name=student_name, confidence=confidence, session_id=session_id)
+            metadata_str = json.dumps(metadata) if metadata else None
+            new_record = AttendanceRecord(
+                student_name=student_name, 
+                confidence=confidence, 
+                session_id=session_id,
+                metadata_json=metadata_str
+            )
             session.add(new_record)
             session.commit()
             session.refresh(new_record)
@@ -130,3 +145,54 @@ class AttendanceService:
                 "present": present_sorted,
                 "absent": absent_sorted
             }
+
+    def register_unknown(self, session_id: int, image_path: str, confidence: float = 0.0) -> UnknownFace:
+        with Session(engine) as session:
+            unknown = UnknownFace(
+                session_id=session_id,
+                image_path=image_path,
+                confidence=confidence
+            )
+            session.add(unknown)
+            session.commit()
+            session.refresh(unknown)
+            return unknown
+
+    def get_unknowns(self, session_id: int) -> List[UnknownFace]:
+        with Session(engine) as session:
+             return session.exec(select(UnknownFace).where(
+                 UnknownFace.session_id == session_id,
+                 UnknownFace.is_resolved == False
+             ).order_by(UnknownFace.timestamp.desc())).all()
+
+    def resolve_unknown(self, unknown_id: int, student_name: str) -> Optional[AttendanceRecord]:
+        with Session(engine) as session:
+            unknown = session.get(UnknownFace, unknown_id)
+            if not unknown:
+                return None
+            
+            unknown.is_resolved = True
+            unknown.resolved_to = student_name
+            session.add(unknown)
+            
+            # Create attendance record
+            record = AttendanceRecord(
+                student_name=student_name,
+                session_id=unknown.session_id,
+                confidence=1.0, # Human verified
+                metadata_json=json.dumps({"source": "manual_resolution", "original_unknown_id": unknown.id})
+            )
+            session.add(record)
+            session.commit()
+            session.refresh(record)
+            session.refresh(record)
+            return record
+
+    def get_student_history(self, student_name: str) -> List[AttendanceRecord]:
+        with Session(engine) as session:
+            # Get all records for student, ordered by time
+            # Might want to join with Session to get session name? 
+            # For now just records.
+            return session.exec(select(AttendanceRecord).where(
+                AttendanceRecord.student_name == student_name
+            ).order_by(AttendanceRecord.timestamp.desc())).all()

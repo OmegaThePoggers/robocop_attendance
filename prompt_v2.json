@@ -1,0 +1,262 @@
+{
+    "product_name": "Robocop Attendance System",
+    "stage": "Stage 2",
+    "deployment_target": {
+        "environment": "single_machine",
+        "network": "local_or_lan",
+        "offline_first": true
+    },
+    "stage_objective": "Transform the system into a trustworthy, explainable, role-based attendance platform with human oversight, suitable for a college demo.",
+    "success_criteria": [
+        "Teachers can see and correct recognition results",
+        "Students can fairly dispute attendance",
+        "Admins have full auditability",
+        "System runs smoothly on a standard laptop",
+        "False absentees are minimized"
+    ],
+    "non_goals": [
+        "ERP or LDAP integration",
+        "Cloud deployment",
+        "GPU dependency",
+        "Physical gate hardware control",
+        "Multi-server scaling",
+        "Real-time multi-client streaming"
+    ],
+    "design_principles": [
+        "False absentees are worse than false presents",
+        "Human-in-the-loop decision making",
+        "Explainability over automation",
+        "Performance over novelty",
+        "Chunked development to avoid context rot"
+    ],
+    "roles": {
+        "student": {
+            "auth": "SAP_ID_and_password",
+            "permissions": [
+                "view_attendance_summary",
+                "view_subject_wise_attendance",
+                "submit_attendance_dispute",
+                "upload_dispute_evidence",
+                "annotate_dispute_media"
+            ],
+            "restrictions": [
+                "no_attendance_modification"
+            ]
+        },
+        "teacher": {
+            "auth": "credential_login",
+            "permissions": [
+                "start_session",
+                "end_session",
+                "upload_image_or_video",
+                "view_live_recognition_feedback",
+                "assign_unknown_faces_pending",
+                "finalize_session",
+                "view_session_history"
+            ],
+            "constraints": [
+                "can_only_access_assigned_subjects"
+            ]
+        },
+        "admin": {
+            "auth": "credential_login",
+            "permissions": [
+                "user_management",
+                "subject_management",
+                "teacher_subject_assignment",
+                "attendance_modification_with_reason",
+                "dispute_resolution",
+                "system_configuration",
+                "dataset_management",
+                "view_audit_logs"
+            ]
+        },
+        "kiosk": {
+            "mode": "demo_only",
+            "permissions": [
+                "sap_id_input",
+                "face_match",
+                "log_entry_attempts"
+            ],
+            "restrictions": [
+                "no_enforcement",
+                "human_override_assumed"
+            ]
+        }
+    },
+    "core_features": {
+        "authentication_and_rbac": {
+            "mechanism": "JWT",
+            "identifier": "SAP_ID",
+            "role_guards": true
+        },
+        "explainable_face_recognition": {
+            "metadata_stored": [
+                "bounding_box",
+                "confidence_score",
+                "recognition_status"
+            ],
+            "visual_overlay": "canvas_based",
+            "unknown_face_gallery": "session_scoped",
+            "media_retention_days": 30
+        },
+        "teacher_live_correction": {
+            "unknown_face_panel": true,
+            "face_assignment_state": "pending_until_finalization",
+            "session_timeline_metrics": [
+                "first_detection_time",
+                "total_frames_detected"
+            ],
+            "session_finalization": {
+                "locks_attendance": true,
+                "commits_assignments": true
+            }
+        },
+        "student_dispute_system": {
+            "dispute_window_days": 30,
+            "auto_attached_media": true,
+            "additional_evidence_upload": true,
+            "annotation_tools": [
+                "circle",
+                "text_note"
+            ],
+            "status_lifecycle": [
+                "pending",
+                "approved",
+                "rejected"
+            ]
+        },
+        "admin_control_panel": {
+            "attendance_oversight": true,
+            "dispute_review": true,
+            "threshold_configuration": true,
+            "dataset_rebuild": true
+        },
+        "audit_logging": {
+            "enabled": true,
+            "logged_actions": [
+                "manual_attendance_change",
+                "face_assignment",
+                "dispute_decision",
+                "dataset_update"
+            ],
+            "schema": [
+                "timestamp",
+                "actor_role",
+                "actor_id",
+                "action",
+                "target",
+                "metadata"
+            ]
+        }
+    },
+    "performance_requirements": {
+        "recognition_pipeline": [
+            "early_exit_matching",
+            "numpy_batch_distance_computation",
+            "low_quality_frame_skipping"
+        ],
+        "video_processing": {
+            "default_fps": 1,
+            "adaptive_fps": true,
+            "tracking": "centroid_based"
+        },
+        "database": {
+            "engine": "sqlite",
+            "wal_mode": true,
+            "indexes": [
+                "attendance_records(session_id, student_id)",
+                "disputes(student_id, session_id)"
+            ]
+        },
+        "async_processing": {
+            "video_processing": "background_tasks",
+            "ui_blocking": false
+        }
+    },
+    "data_retention_policy": {
+        "attendance_records": "infinite",
+        "system_logs": "infinite",
+        "photos_and_videos": "30_days",
+        "face_snapshots": "30_days",
+        "dispute_evidence": "until_resolution_plus_30_days"
+    },
+    "development_chunks": [
+        {
+            "chunk_id": 1,
+            "title": "Authentication and RBAC",
+            "deliverables": [
+                "user_model",
+                "sap_id_mapping",
+                "jwt_auth",
+                "role_guards"
+            ],
+            "stop_after": true
+        },
+        {
+            "chunk_id": 2,
+            "title": "Explainable Recognition and Bounding Boxes",
+            "deliverables": [
+                "confidence_scores",
+                "bounding_box_metadata",
+                "canvas_overlay_rendering"
+            ],
+            "stop_after": true
+        },
+        {
+            "chunk_id": 3,
+            "title": "Teacher Live Correction Tools",
+            "deliverables": [
+                "unknown_face_gallery",
+                "pending_face_assignments",
+                "session_finalization_logic"
+            ],
+            "stop_after": true
+        },
+        {
+            "chunk_id": 4,
+            "title": "Student Dispute System",
+            "deliverables": [
+                "dispute_model",
+                "evidence_upload",
+                "annotation_ui",
+                "status_workflow"
+            ],
+            "stop_after": true
+        },
+        {
+            "chunk_id": 5,
+            "title": "Admin Panel and Audit Logs",
+            "deliverables": [
+                "dispute_resolution_ui",
+                "attendance_editing",
+                "audit_log_viewer",
+                "dataset_controls"
+            ],
+            "stop_after": true
+        },
+        {
+            "chunk_id": 6,
+            "title": "Performance Hardening",
+            "deliverables": [
+                "video_pipeline_optimizations",
+                "db_indexing",
+                "background_tasks",
+                "media_cleanup_jobs"
+            ],
+            "stop_after": true
+        }
+    ],
+    "context_rot_prevention": {
+        "one_doc_per_chunk": true,
+        "schema_freeze_per_chunk": true,
+        "no_cross_chunk_refactors": true
+    },
+    "demo_completion_checklist": [
+        "Teacher can explain attendance decisions",
+        "Student can dispute with evidence",
+        "Admin can audit all changes",
+        "System runs smoothly on one machine",
+        "No black-box AI decisions"
+    ]
+}

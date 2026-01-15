@@ -33,7 +33,8 @@ class VideoProcessor:
         
         frame_count = 0
         all_detections = []
-        
+        best_metadata_by_name = {}
+
         while True:
             success, frame = cap.read()
             if not success:
@@ -49,7 +50,13 @@ class VideoProcessor:
                 results = self.recognition_service.recognize_image(rgb_frame)
                 
                 for res in results:
-                    all_detections.append(res['name'])
+                    name = res['name']
+                    all_detections.append(name)
+                    
+                    # Track best metadata (lowest distance)
+                    dist = res.get('distance', 1.0)
+                    if name not in best_metadata_by_name or dist < best_metadata_by_name[name]['distance']:
+                        best_metadata_by_name[name] = res
             
             frame_count += 1
             
@@ -57,23 +64,20 @@ class VideoProcessor:
         
         # Consensus Logic: Multi-Face Support
         if not all_detections:
-            return {"identities": [], "details": "No faces detected in sampled frames"}
+            return {"identities": [], "details": "No faces detected in sampled frames", "metadata": {}}
             
         counter = collections.Counter(all_detections)
-        
-        # Filter out "Unknown" if there are other detections, or keep it if it's the only one
-        # but attendance service will filter Unknown anyway.
-        
-        # We return all names that were detected. 
-        # In a real scenario, you might want a threshold (e.g. appears in at least 20% of frames).
-        # For this short 5s video (5 frames), appearing once is significant enough for a prototype.
         verified_identities = [name for name, count in counter.most_common() if name != "Unknown"]
         
         if not verified_identities and counter["Unknown"] > 0:
              verified_identities = ["Unknown"]
 
+        # Filter best_metadata to only verified identities
+        final_metadata = {name: best_metadata_by_name[name] for name in verified_identities if name in best_metadata_by_name}
+
         return {
             "identities": verified_identities,
             "total_frames_processed": frame_count // frame_interval if frame_count > 0 else 0,
-            "vote_counts": dict(counter)
+            "vote_counts": dict(counter),
+            "metadata": final_metadata
         }
