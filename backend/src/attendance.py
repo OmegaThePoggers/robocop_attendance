@@ -188,11 +188,13 @@ class AttendanceService:
             session.refresh(record)
             return record
 
-    def get_student_history(self, student_name: str) -> List[AttendanceRecord]:
+    def get_student_history(self, student_name: str, aliases: Optional[List[str]] = None) -> List[AttendanceRecord]:
         with Session(engine) as session:
-            # Get all records for student, ordered by time
-            # Might want to join with Session to get session name? 
-            # For now just records.
+            # Check for records matching username OR face identity alias
+            names_to_check = [student_name]
+            if aliases:
+                names_to_check.extend(aliases)
+            
             return session.exec(select(AttendanceRecord).where(
-                AttendanceRecord.student_name == student_name
+                AttendanceRecord.student_name.in_(names_to_check)
             ).order_by(AttendanceRecord.timestamp.desc())).all()

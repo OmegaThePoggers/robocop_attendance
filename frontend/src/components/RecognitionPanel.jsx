@@ -16,7 +16,10 @@ export default function RecognitionPanel() {
         const selected = e.target.files[0];
         if (selected) {
             setFile(selected);
-            setPreview(URL.createObjectURL(selected));
+            setPreview(prev => {
+                if (prev) URL.revokeObjectURL(prev);
+                return URL.createObjectURL(selected);
+            });
             setMessage(null);
             setResults(null);
 
@@ -28,6 +31,13 @@ export default function RecognitionPanel() {
             }
         }
     };
+
+    // Cleanup object URL on unmount
+    useEffect(() => {
+        return () => {
+            if (preview) URL.revokeObjectURL(preview);
+        }
+    }, [preview]);
 
     const onImgLoad = (e) => {
         setImgDims({ w: e.target.naturalWidth, h: e.target.naturalHeight });
@@ -41,33 +51,46 @@ export default function RecognitionPanel() {
         setResults(null);
 
         try {
-            let result;
             if (mode === 'image') {
-                result = await recognizeImage(file);
+                const result = await recognizeImage(file);
                 setResults(result); // { faces: [...] }
                 const names = result.faces.map(f => f.name).join(', ');
                 setMessage({ type: 'success', text: `Processed.` });
             } else {
-                result = await recognizeVideo(file);
-                // Video result: { identities, metadata, ... }
-                setResults(result);
-                const names = result.identities.join(', ');
-                setMessage({
-                    type: 'success',
-                    text: `Processed (${result.total_frames_processed} frames)`
-                });
+                const result = await recognizeVideo(file);
+
+                if (result.status === 'processing') {
+                    // Async response
+                    setMessage({
+                        type: 'success',
+                        text: `Background Job Started: ${result.message}`
+                    });
+                } else {
+                    // Sync response (fallback)
+                    setResults(result);
+                    const names = result.identities.join(', ');
+                    setMessage({
+                        type: 'success',
+                        text: `Processed (${result.total_frames_processed} frames). Found: ${names}`
+                    });
+                }
             }
         } catch (error) {
+            console.error(error);
             setMessage({ type: 'error', text: 'Recognition failed. check server.' });
         } finally {
             setLoading(false);
         }
     };
 
-    // Helper to render boxes for images
+    // Helper to render boxes for images (This is now mostly handled by drawBoxes, but kept for consistency if needed)
     const renderBoxes = () => {
         if (mode !== 'image' || !results || !results.faces) return null;
 
+        // If drawBoxes is used to modify the preview, this renderBoxes might not be needed
+        // or it could be used to render interactive overlays.
+        // For now, it's kept as is, assuming drawBoxes updates the preview image itself.
+        // If drawBoxes is not used, this would render the boxes as before.
         return results.faces.map((face, i) => {
             const [top, right, bottom, left] = face.bounding_box;
             // Calculate percentages

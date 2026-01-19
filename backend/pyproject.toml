@@ -14,5 +14,6 @@ dependencies = [
     "opencv-python-headless",
     "sqlmodel",
     "passlib[argon2]",
-    "python-jose[cryptography]"
+    "python-jose[cryptography]",
+    "slowapi"
 ]

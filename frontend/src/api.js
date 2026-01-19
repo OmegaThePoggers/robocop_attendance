@@ -223,3 +223,59 @@ export async function getMyDisputes() {
         return [];
     }
 }
+
+// Admin API
+export async function getAllDisputes() {
+    try {
+        const response = await fetch(`${API_URL}/disputes`, {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch disputes');
+        return await response.json();
+    } catch {
+        return [];
+    }
+}
+
+export async function resolveDispute(disputeId, status) {
+    const response = await fetch(`${API_URL}/disputes/${disputeId}/resolve?status=${status}`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to resolve dispute');
+    return await response.json();
+}
+
+export async function getAllUsers() {
+    try {
+        const response = await fetch(`${API_URL}/admin/users`, {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch users');
+        return await response.json();
+    } catch {
+        return [];
+    }
+}
+
+export async function mapUserIdentity(username, faceIdentity) {
+    const response = await fetch(`${API_URL}/admin/map-identity`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ username, face_identity: faceIdentity })
+    });
+    if (!response.ok) throw new Error('Failed to map identity');
+    return await response.json();
+}
+
+export async function getAuditLogs() {
+    try {
+        const response = await fetch(`${API_URL}/admin/audit-logs`, {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch logs');
+        return await response.json();
+    } catch {
+        return [];
+    }
+}

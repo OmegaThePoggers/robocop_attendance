@@ -1,9 +1,13 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, status
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, status, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Optional, List, Dict
 from sqlmodel import Session, select
 from datetime import timedelta
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi import Request
 
 from .embedding_loader import EmbeddingLoader
 from .recognition import RecognitionService
@@ -11,7 +15,9 @@ from .video_processor import VideoProcessor
 from .database import create_db_and_tables, engine
 from .attendance import AttendanceService
 from .dispute_service import DisputeService
-from .models import AttendanceRecord, User, UserRole, Dispute, DisputeStatus, DisputeCreate
+from .admin_service import AdminService
+from .models import AttendanceRecord, User, UserRole, Dispute, DisputeStatus, DisputeCreate, AuditLog
+from .schemas import MapUserRequest
 from .auth_service import (
     create_access_token, 
     verify_password, 
@@ -31,6 +37,11 @@ from fastapi.staticfiles import StaticFiles
 from .models import UnknownFace
 
 app = FastAPI()
+
+# Rate Limiter Setup
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Enable CORS
 app.add_middleware(
@@ -52,6 +63,7 @@ video_processor: Optional[VideoProcessor] = None
 # Stateless services can be initialized immediately
 attendance_service = AttendanceService()
 dispute_service = DisputeService()
+admin_service = AdminService()
 
 # Role Guards
 allow_teacher_admin = RoleChecker([UserRole.TEACHER, UserRole.ADMIN])
@@ -122,7 +134,8 @@ def read_health():
     return {"status": "ok"}
 
 @app.post("/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+@limiter.limit("5/minute")
+async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == form_data.username)).first()
         if not user or not verify_password(form_data.password, user.password_hash):
@@ -152,7 +165,12 @@ def get_attendance_log(current_user: User = Depends(get_current_user)):
 def get_my_attendance(current_user: User = Depends(get_current_user)):
     if not attendance_service:
         raise HTTPException(status_code=500, detail="Services not initialized")
-    return attendance_service.get_student_history(current_user.username)
+    
+    aliases = []
+    if current_user.face_identity:
+        aliases.append(current_user.face_identity)
+        
+    return attendance_service.get_student_history(current_user.username, aliases=aliases)
 
 @app.post("/sessions")
 def create_session(name: str, user: User = Depends(allow_teacher_admin)):
@@ -207,7 +225,8 @@ def get_absent_students(current_user: User = Depends(get_current_user)):
     return attendance_service.get_absentees_for_session(active.id, all_students)
 
 @app.post("/recognize/image")
-async def recognize_image(file: UploadFile = File(...), user: User = Depends(allow_teacher_kiosk)):
+@limiter.limit("10/minute")
+async def recognize_image(request: Request, file: UploadFile = File(...), user: User = Depends(allow_teacher_kiosk)):
     if not recognition_service:
         raise HTTPException(status_code=500, detail="Recognition service not initialized")
     
@@ -277,8 +296,53 @@ async def recognize_image(file: UploadFile = File(...), user: User = Depends(all
     finally:
         await file.close()
 
-@app.post("/recognize/video")
-async def recognize_video(file: UploadFile = File(...), user: User = Depends(allow_teacher_kiosk)):
+def process_video_background(file_path: str, user_username: str, active_session_id: Optional[int]):
+    try:
+        print(f"Background: Processing task for video {file_path}")
+        if not video_processor:
+            print("Error: VideoProcessor not initialized in background task.")
+            return
+
+        # Process the video
+        results = video_processor.process_video(file_path)
+        identities = results.get('identities', [])
+        metadata = results.get('metadata', {})
+
+        print(f"Background: Video processed. Identities found: {identities}")
+
+        if attendance_service:
+            for name in identities:
+                if name == "Unknown":
+                    # For unknown faces in video, we currently don't extract individual frames 
+                    # to UnknownFace gallery as the processor aggregates metrics.
+                    # Future improvement: Extract representative frames for Unknowns from video.
+                    continue
+                
+                # Mark attendance
+                # Use metadata if available
+                confidence = 1.0
+                meta = metadata.get(name, {})
+                if 'distance' in meta:
+                    confidence = meta['distance']
+                
+                attendance_service.mark_attendance(name, confidence=confidence, session_id=active_session_id, metadata=meta)
+
+    except Exception as e:
+        print(f"Error in background video processing: {e}")
+    finally:
+        # Cleanup temp file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"Background: Cleaned up temp file {file_path}")
+
+@app.post("/recognize/video", status_code=202)
+@limiter.limit("2/minute")
+async def recognize_video(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...), 
+    user: User = Depends(allow_teacher_kiosk)
+):
     if not video_processor:
         raise HTTPException(status_code=500, detail="Video processor not initialized")
     
@@ -288,35 +352,24 @@ async def recognize_video(file: UploadFile = File(...), user: User = Depends(all
 
     # Save uploaded file to a temporary file
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+        # Create a temp file that persists after close so background task can read it
+        fd, tmp_path = tempfile.mkstemp(suffix=os.path.splitext(file.filename)[1])
+        with os.fdopen(fd, 'wb') as tmp:
             shutil.copyfileobj(file.file, tmp)
-            tmp_path = tmp.name
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save uploaded video: {e}")
 
-    try:
-        # Process video
-        results = video_processor.process_video(tmp_path)
-        
-        # Mark attendance for video consensus
-        if attendance_service and results.get("identities"):
-            metadata_map = results.get("metadata", {})
-            for name in results["identities"]:
-                student_metadata = metadata_map.get(name)
-                conf = student_metadata.get('distance', 0.0) if student_metadata else 0.0
-                attendance_service.mark_attendance(name, confidence=conf, metadata=student_metadata)
-            
-        return results
-    except Exception as e:
-        print(f"Error processing video: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        # Cleanup temp file
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
-        await file.close()
+    # Capture current active session ID to attribute attendance correctly
+    active_session_id = None
+    if attendance_service:
+        active = attendance_service.get_active_session()
+        if active:
+            active_session_id = active.id
+
+    # Add to background tasks
+    background_tasks.add_task(process_video_background, tmp_path, user.username, active_session_id)
+
+    return {"status": "processing", "message": "Video accepted for background processing. Check Live Log for updates."}
 
 @app.get("/sessions/active/unknowns", response_model=List[UnknownFace])
 def get_active_unknowns(user: User = Depends(allow_teacher_admin)):
@@ -389,3 +442,83 @@ def resolve_dispute(dispute_id: int, status: DisputeStatus, current_user: User =
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+# Admin & Audit System
+
+@app.get("/admin/users", response_model=List[User])
+def get_all_users(current_user: User = Depends(allow_admin)):
+    with Session(engine) as session:
+        return session.exec(select(User)).all()
+
+@app.post("/admin/map-identity")
+def map_user_identity(request: MapUserRequest, current_user: User = Depends(allow_admin)):
+    with Session(engine) as session:
+        user = session.exec(select(User).where(User.username == request.username)).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.face_identity = request.face_identity
+        session.add(user)
+        session.commit()
+        
+        # Log action
+        if admin_service:
+            admin_service.log_action(
+                actor_username=current_user.username,
+                action="MAP_USER",
+                target_id=user.username,
+                details={"face_identity": request.face_identity}
+            )
+            
+        return {"status": "success", "username": user.username, "face_identity": user.face_identity}
+
+@app.get("/admin/audit-logs", response_model=List[AuditLog])
+def get_audit_logs(current_user: User = Depends(allow_admin)):
+    if not admin_service:
+        raise HTTPException(status_code=500, detail="Services not initialized")
+    return admin_service.get_audit_logs()
+
+@app.post("/admin/cleanup")
+def cleanup_media(days: int = 30, current_user: User = Depends(allow_admin)):
+    """
+    Deletes UnknownFace images older than 'days' and removes corresponding DB records.
+    """
+    if not attendance_service:
+         raise HTTPException(status_code=500, detail="Services not initialized")
+    
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    count = 0
+    deleted_files = 0
+    
+    with Session(engine) as session:
+        # Find old records
+        statement = select(UnknownFace).where(UnknownFace.timestamp < cutoff_date)
+        results = session.exec(statement).all()
+        
+        for face in results:
+            # Delete file
+            # Path stored as "unknowns/filename.jpg"
+            # Full path: static/unknowns/filename.jpg
+            if face.image_path:
+                full_path = os.path.join("static", face.image_path)
+                if os.path.exists(full_path):
+                    try:
+                        os.remove(full_path)
+                        deleted_files += 1
+                    except Exception as e:
+                        print(f"Failed to delete {full_path}: {e}")
+            
+            session.delete(face)
+            count += 1
+            
+        session.commit()
+        
+        # Log action
+        if admin_service:
+            admin_service.log_action(
+                actor_username=current_user.username,
+                action="CLEANUP_MEDIA",
+                details={"days": days, "records_deleted": count, "files_deleted": deleted_files}
+            )
+
+    return {"status": "success", "records_deleted": count, "files_deleted": deleted_files}
