@@ -29,6 +29,24 @@ export async function loginUser(username, password) {
     return await response.json();
 }
 
+export async function registerUser(username, password, fullName, faceIdentity) {
+    const response = await fetch(`${API_URL}/register`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            username,
+            password,
+            full_name: fullName,
+            face_identity: faceIdentity,
+            role: 'student'
+        })
+    });
+    if (!response.ok) throw new Error('Registration failed');
+    return await response.json();
+}
+
 export async function getAttendance() {
     try {
         const response = await fetch(`${API_URL}/attendance`, {
@@ -199,17 +217,31 @@ export async function getMyAttendance() {
     }
 }
 
-export async function createDispute(sessionId, description) {
+export async function createDispute(sessionId, description, attendanceSourceId = null, selectedFaceCoords = null) {
     const response = await fetch(`${API_URL}/disputes`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
             session_id: sessionId,
-            description: description
+            description: description,
+            attendance_source_id: attendanceSourceId || null,
+            selected_face_coords: selectedFaceCoords || null
         })
     });
     if (!response.ok) throw new Error('Failed to file dispute');
     return await response.json();
+}
+
+export async function getSessionEvidence(sessionId) {
+    try {
+        const response = await fetch(`${API_URL}/sessions/${sessionId}/evidence`, {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch evidence');
+        return await response.json();
+    } catch {
+        return [];
+    }
 }
 
 export async function getMyDisputes() {

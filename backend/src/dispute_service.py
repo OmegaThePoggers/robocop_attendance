@@ -5,7 +5,14 @@ from .models import Dispute, DisputeStatus, User, AttendanceSession
 from .database import engine
 
 class DisputeService:
-    def create_dispute(self, student_username: str, session_id: int, description: str) -> Dispute:
+    def create_dispute(
+        self, 
+        student_username: str, 
+        session_id: int, 
+        description: str,
+        attendance_source_id: Optional[int] = None,
+        selected_face_coords: Optional[List[int]] = None
+    ) -> Dispute:
         with Session(engine) as session:
             # Check if dispute already exists for this session?
             # Maybe allow multiple? Let's assume one per session for now.
@@ -15,12 +22,16 @@ class DisputeService:
             )).first()
             
             if existing:
+                # Update existing if needed or return
                 return existing
 
+            coords_str = str(selected_face_coords) if selected_face_coords else None
             dispute = Dispute(
                 student_username=student_username,
                 session_id=session_id,
-                description=description
+                description=description,
+                attendance_source_id=attendance_source_id,
+                selected_face_coords=coords_str
             )
             session.add(dispute)
             session.commit()

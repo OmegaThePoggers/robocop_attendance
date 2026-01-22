@@ -16,7 +16,7 @@ from .database import create_db_and_tables, engine
 from .attendance import AttendanceService
 from .dispute_service import DisputeService
 from .admin_service import AdminService
-from .models import AttendanceRecord, User, UserRole, Dispute, DisputeStatus, DisputeCreate, AuditLog
+from .models import AttendanceRecord, User, UserRole, Dispute, DisputeStatus, DisputeCreate, AuditLog, AttendanceSource, UserCreate
 from .schemas import MapUserRequest
 from .auth_service import (
     create_access_token, 
@@ -150,6 +150,28 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
         )
         return {"access_token": access_token, "token_type": "bearer", "role": user.role.value}
 
+@app.post("/register", response_model=User)
+@limiter.limit("5/minute")
+async def register_user(request: Request, user_data: UserCreate):
+    with Session(engine) as session:
+        # Check if user exists
+        existing = session.exec(select(User).where(User.username == user_data.username)).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already registered")
+        
+        # Create user
+        user = User(
+            username=user_data.username,
+            password_hash=get_password_hash(user_data.password),
+            role=user_data.role, 
+            full_name=user_data.full_name,
+            face_identity=user_data.face_identity
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        return user
+
 @app.get("/users/me", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
@@ -234,11 +256,20 @@ async def recognize_image(request: Request, file: UploadFile = File(...), user: 
     if file.content_type not in ["image/jpeg", "image/png"]:
         raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG are supported.")
 
+    # Ensure evidence directory exists
+    os.makedirs("static/evidence", exist_ok=True)
+    evidence_filename = f"{uuid.uuid4()}.jpg"
+    evidence_path = os.path.join("static/evidence", evidence_filename)
+
     try:
         # Read file into memory to use with OpenCV
         contents = await file.read()
         nparr = np.fromstring(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        # Save evidence to disk (write raw bytes or opencv image)
+        # Using opencv write to ensure it's saved as valid image
+        cv2.imwrite(evidence_path, img)
         
         # Convert to RGB for recognition
         rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -249,6 +280,18 @@ async def recognize_image(request: Request, file: UploadFile = File(...), user: 
         # Mark attendance / Handle Unknowns
         if attendance_service:
             active_session = attendance_service.get_active_session()
+            session_id = active_session.id if active_session else None
+            
+            # Create AttendanceSource record
+            if session_id:
+                with Session(engine) as db:
+                    source = AttendanceSource(
+                        session_id=session_id,
+                        file_path=f"evidence/{evidence_filename}",
+                        media_type="image"
+                    )
+                    db.add(source)
+                    db.commit()
             
             for face in results:
                 name = face['name']
@@ -303,7 +346,26 @@ def process_video_background(file_path: str, user_username: str, active_session_
             print("Error: VideoProcessor not initialized in background task.")
             return
 
+        # Move temporary video to evidence storage if session exists
+        if active_session_id:
+             os.makedirs("static/evidence", exist_ok=True)
+             evidence_filename = f"{uuid.uuid4()}.mp4"
+             evidence_dest = os.path.join("static/evidence", evidence_filename)
+             # Copy/Move logic
+             shutil.copy(file_path, evidence_dest)
+             
+             with Session(engine) as db:
+                 source = AttendanceSource(
+                    session_id=active_session_id,
+                    file_path=f"evidence/{evidence_filename}",
+                    media_type="video"
+                 )
+                 db.add(source)
+                 db.commit()
+
         # Process the video
+        # We process the original temp file or the new evidence file?
+        # Let's process the temp file as it's already there and we might delete it later (though shutil.copy keeps it)
         results = video_processor.process_video(file_path)
         identities = results.get('identities', [])
         metadata = results.get('metadata', {})
@@ -402,6 +464,32 @@ def create_dispute(dispute: DisputeCreate, current_user: User = Depends(get_curr
         if not dispute_service:
             raise HTTPException(status_code=500, detail="Services not initialized")
         return dispute_service.create_dispute(current_user.username, dispute.session_id, dispute.description)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/sessions/{session_id}/evidence", response_model=List[AttendanceSource])
+def get_session_evidence(session_id: int, current_user: User = Depends(get_current_user)):
+    # Students can only see evidence for sessions they are part of? 
+    # Or strict: Only session they are in? 
+    # For now allow all logged in users to see evidence for correct dispute filing.
+    with Session(engine) as session:
+        return session.exec(select(AttendanceSource).where(AttendanceSource.session_id == session_id).order_by(AttendanceSource.timestamp.desc())).all()
+
+@app.post("/disputes", response_model=Dispute)
+def create_dispute(dispute: DisputeCreate, current_user: User = Depends(get_current_user)):
+    try:
+        if not dispute_service:
+            raise HTTPException(status_code=500, detail="Services not initialized")
+        
+        return dispute_service.create_dispute(
+            student_username=current_user.username,
+            session_id=dispute.session_id,
+            description=dispute.description,
+            attendance_source_id=dispute.attendance_source_id,
+            selected_face_coords=dispute.selected_face_coords
+        )
     except Exception as e:
         import traceback
         traceback.print_exc()

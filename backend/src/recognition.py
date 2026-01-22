@@ -27,7 +27,22 @@ class RecognitionService:
             image = face_recognition.load_image_file(image_file)
         
         # Detect face locations (using HOG by default for speed/CPU)
+        # First pass: Default upsampling (1)
         face_locations = face_recognition.face_locations(image)
+        
+        # Second pass: If no faces found, try upsampling for smaller/blurry faces
+        if not face_locations:
+             print("No faces found in first pass. Retrying with upsample=2...")
+             face_locations = face_recognition.face_locations(image, number_of_times_to_upsample=2)
+
+        # Third pass: If still no faces, try CNN (slower but handles partial/occluded faces better)
+        if not face_locations:
+             print("No faces found in second pass. Retrying with CNN model...")
+             try:
+                 face_locations = face_recognition.face_locations(image, number_of_times_to_upsample=1, model="cnn")
+             except Exception as e:
+                 print(f"CNN model failed (possibly no GPU or memory issue): {e}")
+
         if not face_locations:
             return []
 

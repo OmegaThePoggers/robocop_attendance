@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 from sqlmodel import Field, SQLModel
 
 class AttendanceSession(SQLModel, table=True):
@@ -28,6 +28,13 @@ class UnknownFace(SQLModel, table=True):
     is_resolved: bool = Field(default=False)
     resolved_to: Optional[str] = None # Name of student if resolved
 
+class AttendanceSource(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    session_id: Optional[int] = Field(default=None, foreign_key="attendancesession.id", index=True)
+    file_path: str # Path to the original full image/video frame
+    media_type: str # 'image' or 'video'
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
 class DisputeStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
@@ -37,6 +44,8 @@ class Dispute(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     student_username: str = Field(foreign_key="user.username")
     session_id: int = Field(foreign_key="attendancesession.id", index=True)
+    attendance_source_id: Optional[int] = Field(default=None, foreign_key="attendancesource.id")
+    selected_face_coords: Optional[str] = None # JSON [top, right, bottom, left]
     description: str
     status: DisputeStatus = Field(default=DisputeStatus.PENDING, index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -44,6 +53,8 @@ class Dispute(SQLModel, table=True):
 class DisputeCreate(SQLModel):
     session_id: int
     description: str
+    attendance_source_id: Optional[int] = None
+    selected_face_coords: Optional[List[int]] = None
 
 class UserRole(str, Enum):
     ADMIN = "admin"
@@ -59,6 +70,13 @@ class User(SQLModel, table=True):
     full_name: Optional[str] = None
     sap_id: Optional[str] = None
     # For robust mapping, we might store "face_identity" here
+    face_identity: Optional[str] = None 
+
+class UserCreate(SQLModel):
+    username: str
+    password: str
+    full_name: Optional[str] = None
+    role: UserRole = UserRole.STUDENT
     face_identity: Optional[str] = None 
 
 class AuditLog(SQLModel, table=True):
