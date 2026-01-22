@@ -63,25 +63,22 @@ export default function LiveCorrectionPanel() {
                                 {new Date(unknown.timestamp).toLocaleTimeString()}
                             </span>
 
-                            <div className="flex gap-2">
-                                <select
-                                    className="flex-1 bg-robocop-800 border border-robocop-600 text-white text-xs rounded px-2 py-1 focus:outline-none"
-                                    value={selectedStudent[unknown.id] || ''}
-                                    onChange={(e) => setSelectedStudent({ ...selectedStudent, [unknown.id]: e.target.value })}
-                                >
-                                    <option value="">Select Student...</option>
-                                    {students.map(s => (
-                                        <option key={s} value={s}>{s}</option>
-                                    ))}
-                                </select>
-                                <button
-                                    onClick={() => handleAssign(unknown.id)}
-                                    disabled={!selectedStudent[unknown.id]}
-                                    className="bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-xs px-2 rounded font-bold"
-                                >
-                                    ✓
-                                </button>
-                            </div>
+                            <select
+                                className="flex-1 bg-robocop-800 border border-robocop-600 text-white text-xs rounded px-2 py-1 focus:outline-none"
+                                value={selectedStudent[unknown.id] || ''}
+                                onChange={(e) => {
+                                    const studentName = e.target.value;
+                                    if (studentName) {
+                                        handleAssign(unknown.id);
+                                    }
+                                    setSelectedStudent({ ...selectedStudent, [unknown.id]: studentName });
+                                }}
+                            >
+                                <option value="">Select Student...</option>
+                                {students.map(s => (
+                                    <option key={s} value={s}>{s}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
                 ))}
