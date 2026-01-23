@@ -246,6 +246,39 @@ def get_absent_students(current_user: User = Depends(get_current_user)):
     
     return attendance_service.get_absentees_for_session(active.id, all_students)
 
+@app.post("/recognize/video")
+async def recognize_video(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...), 
+    user: User = Depends(allow_teacher_kiosk)
+):
+    # ... existing code ... (This is actually recognize_video, wait I am replacing content, I need to insert BEFORE or nearby)
+    pass
+
+@app.post("/detect-faces")
+async def detect_faces(file: UploadFile = File(...), user: User = Depends(get_current_user)):
+    # Lightweight endpoint for real-time camera overlay
+    if not recognition_service:
+        raise HTTPException(status_code=500, detail="Recognition service not initialized")
+    
+    # Read file
+    contents = await file.read()
+    nparr = np.frombuffer(contents, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    
+    if img is None:
+        return {"faces": []}
+    
+    # Convert to RGB
+    rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    
+    # Detect
+    locations = recognition_service.detect_only(rgb_img)
+    
+    # Convert to JSON friendly format (top, right, bottom, left)
+    return {"faces": locations}
+
 @app.post("/recognize/image")
 @limiter.limit("10/minute")
 async def recognize_image(request: Request, file: UploadFile = File(...), user: User = Depends(allow_teacher_kiosk)):

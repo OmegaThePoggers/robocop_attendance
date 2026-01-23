@@ -165,6 +165,20 @@ export async function recognizeImage(file) {
     return await response.json();
 }
 
+export async function detectFaces(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = getAuthHeaders(null);
+
+    const response = await fetch(`${API_URL}/detect-faces`, {
+        method: 'POST',
+        headers: headers,
+        body: formData,
+    });
+    if (!response.ok) return { faces: [] };
+    return await response.json();
+}
+
 export async function recognizeVideo(file) {
     const formData = new FormData();
     formData.append('file', file);

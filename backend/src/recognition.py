@@ -7,6 +7,27 @@ class RecognitionService:
     def __init__(self, embedding_loader: EmbeddingLoader):
         self.embedding_loader = embedding_loader
 
+    def detect_only(self, image_file) -> List[Tuple[int, int, int, int]]:
+        """
+        Detects faces and returns bounding boxes.
+        Returns: List of (top, right, bottom, left) tuples.
+        """
+        image = image_file
+        if not isinstance(image, np.ndarray):
+            image = face_recognition.load_image_file(image_file)
+        
+        # Detect face locations (using HOG by default for speed/CPU)
+        # First pass: Default upsampling (1)
+        face_locations = face_recognition.face_locations(image)
+        
+        # Second pass: If no faces found, try upsampling for smaller/blurry faces
+        if not face_locations:
+             # print("No faces found in first pass. Retrying with upsample=2...") 
+             # (Commented print to reduce log spam on live preview)
+             face_locations = face_recognition.face_locations(image, number_of_times_to_upsample=2)
+
+        return face_locations
+
     def recognize_image(self, image_file, tolerance: float = 0.6) -> List[Dict]:
         """
         Detects faces in an image and matches them against known students.
@@ -19,30 +40,12 @@ class RecognitionService:
             List of dictionaries containing 'name', 'bounding_box', and 'distance'.
         """
         # Load image (if it's a file path or file-like object)
-        # Note: In FastAPI, we'll likely pass the bytes or a file-like object.
-        # face_recognition.load_image_file handles path or file object.
         image = image_file
         if not isinstance(image, np.ndarray):
-            # Load image if it's not already a numpy array (e.g. file path or file-like object)
             image = face_recognition.load_image_file(image_file)
         
-        # Detect face locations (using HOG by default for speed/CPU)
-        # First pass: Default upsampling (1)
-        face_locations = face_recognition.face_locations(image)
+        face_locations = self.detect_only(image)
         
-        # Second pass: If no faces found, try upsampling for smaller/blurry faces
-        if not face_locations:
-             print("No faces found in first pass. Retrying with upsample=2...")
-             face_locations = face_recognition.face_locations(image, number_of_times_to_upsample=2)
-
-        # Third pass: If still no faces, try CNN (slower but handles partial/occluded faces better)
-        if not face_locations:
-             print("No faces found in second pass. Retrying with CNN model...")
-             try:
-                 face_locations = face_recognition.face_locations(image, number_of_times_to_upsample=1, model="cnn")
-             except Exception as e:
-                 print(f"CNN model failed (possibly no GPU or memory issue): {e}")
-
         if not face_locations:
             return []
 
