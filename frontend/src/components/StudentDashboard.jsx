@@ -46,13 +46,23 @@ export default function StudentDashboard() {
     }
 
     const handleEvidenceSelect = (sourceId, coords) => {
+        console.log("Evidence Selected:", sourceId, coords);
         setEvidenceData({ sourceId, coords });
         setShowGallery(false);
         setDisputeReason((prev) => prev ? prev : "I found my face in the session photos.");
+        alert("Face Location Marked! Evidence attached.");
     }
 
     const handleSubmitDispute = async () => {
         if (!selectedSessionId || !disputeReason) return;
+
+        console.log("Submitting Dispute:", {
+            sessionId: selectedSessionId,
+            description: disputeReason,
+            attendanceSourceId: evidenceData.sourceId,
+            coords: evidenceData.coords
+        });
+
         try {
             await createDispute(selectedSessionId, disputeReason, evidenceData.sourceId, evidenceData.coords);
             alert("Dispute submitted successfully!");

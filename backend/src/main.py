@@ -490,17 +490,7 @@ def resolve_unknown(unknown_id: int, student_name: str, user: User = Depends(all
 
 # Dispute System
 
-@app.post("/disputes", response_model=Dispute)
-def create_dispute(dispute: DisputeCreate, current_user: User = Depends(get_current_user)):
-    try:
-        # Any role can file a dispute? Usually students.
-        if not dispute_service:
-            raise HTTPException(status_code=500, detail="Services not initialized")
-        return dispute_service.create_dispute(current_user.username, dispute.session_id, dispute.description)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/sessions/{session_id}/evidence", response_model=List[AttendanceSource])
 def get_session_evidence(session_id: int, current_user: User = Depends(get_current_user)):

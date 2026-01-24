@@ -135,15 +135,37 @@ function EvidenceModal({ dispute, onClose }) {
     useEffect(() => {
         async function loadEvidence() {
             try {
+                console.log('Loading evidence for dispute:', dispute);
+
                 // Fetch evidence source details
                 const response = await fetch(`http://localhost:8000/sessions/${dispute.session_id}/evidence`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+
+                if (!response.ok) {
+                    console.error('Failed to fetch evidence sources:', response.status);
+                    return;
+                }
+
                 const sources = await response.json();
-                const source = sources.find(s => s.id === dispute.attendance_source_id);
-                setEvidenceSource(source);
+                console.log('Evidence sources:', sources);
+                console.log('Dispute Source ID:', dispute.attendance_source_id, 'Type:', typeof dispute.attendance_source_id);
+                if (sources.length > 0) {
+                    console.log('First Source ID:', sources[0].id, 'Type:', typeof sources[0].id);
+                }
+
+                const source = sources.find(s => s.id == dispute.attendance_source_id);
+                console.log('Found evidence source:', source);
+
+                if (!source) {
+                    console.warn(`Source with ID ${dispute.attendance_source_id} not found in session evidence.`);
+                    // Mock a source if missing to allow UI to show error instead of loading indefinitely
+                    setEvidenceSource({ file_path: 'MISSING_FILE', id: -1 });
+                } else {
+                    setEvidenceSource(source);
+                }
 
                 // Fetch user info to get face_identity
                 const userResponse = await fetch(`http://localhost:8000/admin/users`, {
@@ -151,8 +173,17 @@ function EvidenceModal({ dispute, onClose }) {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+
+                if (!userResponse.ok) {
+                    console.error('Failed to fetch users:', userResponse.status);
+                    return;
+                }
+
                 const users = await userResponse.json();
+                console.log('All users:', users);
+
                 const user = users.find(u => u.username === dispute.student_username);
+                console.log('Found user:', user);
                 setUserInfo(user);
             } catch (e) {
                 console.error("Failed to load evidence", e);
@@ -187,7 +218,13 @@ function EvidenceModal({ dispute, onClose }) {
                             <div className="relative border-2 border-robocop-500 rounded overflow-hidden">
                                 <img
                                     src={`http://localhost:8000/static/${evidenceSource.file_path}`}
+                                    alt="Session evidence"
                                     className="w-full h-auto"
+                                    onError={(e) => {
+                                        console.error('Failed to load evidence image:', e.target.src);
+                                        e.target.style.display = 'none';
+                                        e.target.parentElement.innerHTML = '<div class="bg-robocop-900 p-8 text-center text-red-400">Failed to load image. Path: ' + evidenceSource.file_path + '</div>';
+                                    }}
                                 />
                                 {faceCoords && faceCoords.length === 4 && (
                                     <div
@@ -217,10 +254,12 @@ function EvidenceModal({ dispute, onClose }) {
                             <div className="border-2 border-robocop-500 rounded overflow-hidden">
                                 <img
                                     src={`http://localhost:8000/static/dataset/${userInfo.face_identity}.jpg`}
+                                    alt="Dataset reference"
                                     className="w-full h-auto"
                                     onError={(e) => {
+                                        console.error('Failed to load dataset photo:', e.target.src);
                                         e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>';
-                                        e.target.parentElement.innerHTML = '<div class="bg-robocop-900 p-8 text-center text-slate-500">No dataset photo found</div>';
+                                        e.target.parentElement.innerHTML = '<div class="bg-robocop-900 p-8 text-center text-slate-500">No dataset photo found (' + userInfo.face_identity + ')</div>';
                                     }}
                                 />
                             </div>
