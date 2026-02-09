@@ -107,6 +107,10 @@ class AttendanceService:
             results = session.exec(statement).all()
             return results
 
+    def get_all_records(self, limit: int = 100) -> List[AttendanceRecord]:
+        with Session(engine) as session:
+            return session.exec(select(AttendanceRecord).order_by(AttendanceRecord.timestamp.desc()).limit(limit)).all()
+
     def get_absentees_for_session(self, session_id: int, all_students: List[str]) -> List[str]:
         with Session(engine) as session:
             statement = select(AttendanceRecord.student_name).where(

@@ -1,0 +1,637 @@
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'
+backend-1  | /app/.venv/lib/python3.9/site-packages/face_recognition_models/__init__.py:7: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+backend-1  |   from pkg_resources import resource_filename
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+backend-1  |     return _run_code(code, main_globals, None,
+backend-1  |   File "/usr/local/lib/python3.9/runpy.py", line 87, in _run_code
+backend-1  |     exec(code, run_globals)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+backend-1  |     uvicorn.main()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1161, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1082, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 1443, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/click/core.py", line 788, in invoke
+backend-1  |     return __callback(*args, **kwargs)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+backend-1  |     run(
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/main.py", line 575, in run
+backend-1  |     server.run()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 65, in run
+backend-1  |     return asyncio.run(self.serve(sockets=sockets))
+backend-1  |   File "/usr/local/lib/python3.9/asyncio/runners.py", line 44, in run
+backend-1  |     return loop.run_until_complete(main)
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 69, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/server.py", line 76, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/config.py", line 433, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 22, in import_from_string
+backend-1  |     raise exc from None
+backend-1  |   File "/app/.venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |   File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |   File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+backend-1  |   File "/app/src/main.py", line 23, in <module>
+backend-1  |     from .routers import auth, sessions, attendance, admin, disputes
+backend-1  |   File "/app/src/routers/auth.py", line 5, in <module>
+backend-1  |     from .database import engine, get_session
+backend-1  | ModuleNotFoundError: No module named 'src.routers.database'

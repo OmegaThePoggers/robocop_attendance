@@ -25,7 +25,10 @@ export async function loginUser(username, password) {
         body: formData
     });
 
-    if (!response.ok) throw new Error('Login failed');
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'Login failed');
+    }
     return await response.json();
 }
 
@@ -43,7 +46,10 @@ export async function registerUser(username, password, fullName, faceIdentity) {
             role: 'student'
         })
     });
-    if (!response.ok) throw new Error('Registration failed');
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'Registration failed');
+    }
     return await response.json();
 }
 
@@ -146,14 +152,19 @@ export async function checkHealth() {
     }
 }
 
-export async function recognizeImage(file) {
+export async function recognizeImage(sessionId, file) {
     const formData = new FormData();
     formData.append('file', file);
 
     // Note: Do NOT set Content-Type for FormData, browser sets it with boundary
     const headers = getAuthHeaders(null);
 
-    const response = await fetch(`${API_URL}/recognize/image`, {
+    let url = `${API_URL}/recognize/image`;
+    if (sessionId) {
+        url += `?session_id=${sessionId}`;
+    }
+
+    const response = await fetch(url, {
         method: 'POST',
         headers: headers,
         body: formData,

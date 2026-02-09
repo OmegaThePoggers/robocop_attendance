@@ -86,3 +86,12 @@ class AuditLog(SQLModel, table=True):
     target_id: Optional[str] = None
     details: Optional[str] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class Token(SQLModel):
+    access_token: str
+    token_type: str
+    role: str
+
+class TokenData(SQLModel):
+    username: Optional[str] = None
+    role: Optional[str] = None

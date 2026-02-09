@@ -14,41 +14,58 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-robocop-900 text-slate-200 p-8">
-            <header className="mb-8 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 bg-purple-600 rounded-lg flex items-center justify-center font-bold text-white text-xl shadow-lg">
+        <div className="min-h-screen bg-slate-950 text-slate-200 p-8 font-mono relative">
+            <header className="mb-8 flex justify-between items-end border-b border-slate-800 pb-4">
+                <div className="flex items-center gap-6">
+                    <div className="h-12 w-12 bg-secondary/20 border border-secondary text-secondary flex items-center justify-center font-bold text-2xl rounded-lg">
                         A
                     </div>
-                    <h1 className="text-2xl font-bold text-white">Admin Console</h1>
+                    <div>
+                        <h1 className="text-2xl font-display font-bold text-white uppercase tracking-wider">System Administration</h1>
+                        <p className="text-secondary/70 text-xs mt-1">Academic Records & System Configuration</p>
+                    </div>
                 </div>
-                <div className="flex gap-4">
-                    <button onClick={() => navigate('/dashboard')} className="text-robocop-400 hover:text-white">
-                        Back to Live Dashboard
+                <div className="flex gap-4 items-center">
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="text-slate-400 hover:text-white text-xs font-bold uppercase tracking-wider px-3 py-1"
+                    >
+                        Live Dashboard
                     </button>
-                    <button onClick={handleLogout} className="text-slate-400 hover:text-white">Logout</button>
+                    <button
+                        onClick={handleLogout}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs font-bold uppercase tracking-wide transition-all"
+                    >
+                        Logout
+                    </button>
                 </div>
             </header>
 
-            <div className="flex gap-4 mb-6">
+            <div className="flex gap-2 mb-8">
                 <button
                     onClick={() => setActiveTab('disputes')}
-                    className={`px-4 py-2 rounded-lg font-bold transition-all ${activeTab === 'disputes' ? 'bg-robocop-700 text-white shadow-lg' : 'text-slate-400 hover:bg-robocop-800'
+                    className={`px-6 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all ${activeTab === 'disputes'
+                            ? 'bg-secondary text-white shadow-lg'
+                            : 'bg-slate-900 text-slate-500 hover:bg-slate-800'
                         }`}
                 >
-                    Disputes
+                    Dispute Resolution
                 </button>
                 <button
                     onClick={() => setActiveTab('users')}
-                    className={`px-4 py-2 rounded-lg font-bold transition-all ${activeTab === 'users' ? 'bg-robocop-700 text-white shadow-lg' : 'text-slate-400 hover:bg-robocop-800'
+                    className={`px-6 py-2 text-sm font-bold uppercase tracking-wide rounded-lg transition-all ${activeTab === 'users'
+                            ? 'bg-secondary text-white shadow-lg'
+                            : 'bg-slate-900 text-slate-500 hover:bg-slate-800'
                         }`}
                 >
-                    User Mapping
+                    Biometric Mapping
                 </button>
             </div>
 
-            {activeTab === 'disputes' && <DisputeList />}
-            {activeTab === 'users' && <UserMapper />}
+            <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 min-h-[500px] shadow-xl">
+                {activeTab === 'disputes' && <DisputeList />}
+                {activeTab === 'users' && <UserMapper />}
+            </div>
         </div>
     );
 }

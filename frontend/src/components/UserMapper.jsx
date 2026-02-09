@@ -18,11 +18,6 @@ export default function UserMapper() {
         loadUsers();
     }, []);
 
-    const handleEdit = (user) => {
-        setEditingUser(user);
-        setIdentityInput(user.face_identity || "");
-    }
-
     const handleSave = async () => {
         if (!editingUser) return;
         try {
@@ -30,65 +25,87 @@ export default function UserMapper() {
             setEditingUser(null);
             loadUsers();
         } catch (e) {
-            alert("Failed to map identity");
+            alert("Mapping Failed");
         }
     }
 
     return (
-        <div className="bg-robocop-800 rounded-xl border border-robocop-700 overflow-hidden">
-            <div className="p-4 border-b border-robocop-700 flex justify-between items-center bg-robocop-900/50">
-                <h3 className="font-bold text-white">User Identity Mapping</h3>
-                <button onClick={loadUsers} className="text-sm text-robocop-400 hover:text-white">Refresh</button>
+        <div className="h-full flex flex-col">
+            <div className="bg-slate-900 p-3 border-b border-slate-700 flex justify-between items-center mb-4">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">User Directory & Biometric Links</h3>
+                <span className="bg-primary/10 text-primary text-[10px] px-2 rounded-full border border-primary/20">{users.length} Users</span>
             </div>
 
-            <table className="w-full text-left">
-                <thead className="bg-robocop-900/50 text-robocop-400 uppercase text-xs">
-                    <tr>
-                        <th className="p-4">Username</th>
-                        <th className="p-4">Role</th>
-                        <th className="p-4">Mapped Face Identity</th>
-                        <th className="p-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-robocop-700">
-                    {users.map(user => (
-                        <tr key={user.username} className="hover:bg-robocop-700/30">
-                            <td className="p-4 font-mono text-white">{user.username}</td>
-                            <td className="p-4 text-slate-400">{user.role}</td>
-                            <td className="p-4">
-                                {editingUser?.username === user.username ? (
-                                    <input
-                                        type="text"
-                                        className="bg-robocop-900 border border-robocop-600 rounded px-2 py-1 text-white text-sm w-full"
-                                        value={identityInput}
-                                        onChange={(e) => setIdentityInput(e.target.value)}
-                                        placeholder="e.g. student_1_albert_einstein"
-                                    />
-                                ) : (
-                                    <span className={user.face_identity ? "text-green-400 font-mono" : "text-slate-500 italic"}>
-                                        {user.face_identity || "Unmapped"}
-                                    </span>
-                                )}
-                            </td>
-                            <td className="p-4">
-                                {editingUser?.username === user.username ? (
-                                    <div className="flex gap-2">
-                                        <button onClick={handleSave} className="text-green-400 hover:text-white font-bold">Save</button>
-                                        <button onClick={() => setEditingUser(null)} className="text-slate-400 hover:text-white">Cancel</button>
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={() => handleEdit(user)}
-                                        className="text-robocop-400 hover:text-white"
-                                    >
-                                        Edit
-                                    </button>
-                                )}
-                            </td>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="text-slate-500 text-[10px] uppercase tracking-wider border-b border-slate-800 bg-slate-950">
+                            <th className="p-3 font-semibold">User Profile</th>
+                            <th className="p-3 font-semibold">Role</th>
+                            <th className="p-3 font-semibold">Biometric ID (Dataset Ref)</th>
+                            <th className="p-3 font-semibold text-right">Actions</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                        {users.map(user => (
+                            <tr key={user.username} className="hover:bg-slate-800/50 transition-colors">
+                                <td className="p-3">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-white text-sm">{user.full_name || user.username}</span>
+                                        <span className="text-[10px] text-slate-500 font-mono">@{user.username}</span>
+                                    </div>
+                                </td>
+                                <td className="p-3">
+                                    <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold border ${user.role === 'admin'
+                                            ? 'bg-secondary/10 text-secondary border-secondary/20'
+                                            : 'bg-primary/10 text-primary border-primary/20'
+                                        }`}>
+                                        {user.role}
+                                    </span>
+                                </td>
+                                <td className="p-3 font-mono text-xs text-slate-400">
+                                    {editingUser?.username === user.username ? (
+                                        <input
+                                            autoFocus
+                                            className="bg-slate-950 border border-primary text-white px-2 py-1 rounded w-full focus:outline-none"
+                                            value={identityInput}
+                                            onChange={(e) => setIdentityInput(e.target.value)}
+                                            placeholder="Enter Dataset ID..."
+                                        />
+                                    ) : (
+                                        user.face_identity || <span className="text-slate-600 italic">Not Linked</span>
+                                    )}
+                                </td>
+                                <td className="p-3 text-right">
+                                    {editingUser?.username === user.username ? (
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={handleSave}
+                                                className="text-green-400 hover:text-green-300 text-[10px] uppercase font-bold border border-green-500/50 px-2 py-1 rounded hover:bg-green-500/10"
+                                            >
+                                                Save
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingUser(null)}
+                                                className="text-slate-500 hover:text-slate-300 text-[10px] uppercase font-bold px-2 py-1"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => { setEditingUser(user); setIdentityInput(user.face_identity || ""); }}
+                                            className="text-primary hover:text-white text-[10px] uppercase font-bold border border-primary/30 hover:border-white px-3 py-1 rounded transition-all hover:bg-primary/10"
+                                        >
+                                            Edit Link
+                                        </button>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

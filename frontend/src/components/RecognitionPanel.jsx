@@ -1,335 +1,210 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { recognizeImage, recognizeVideo, detectFaces } from '../api';
 
-export default function RecognitionPanel() {
+export default function RecognitionPanel({ activeSession }) {
+    const videoRef = useRef(null);
+    const [mode, setMode] = useState('camera'); // 'image', 'video', 'camera'
     const [file, setFile] = useState(null);
     const [preview, setPreview] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState(null);
-    const [mode, setMode] = useState('image'); // 'image', 'video', 'camera'
-    const [results, setResults] = useState(null);
-    const [imgDims, setImgDims] = useState({ w: 1, h: 1 });
-    const [detectedFaces, setDetectedFaces] = useState([]); // For camera overlay
+    const [detectedFaces, setDetectedFaces] = useState([]);
+    const [processing, setProcessing] = useState(false);
+    const [message, setMessage] = useState('');
 
-    const videoRef = useRef(null);
-    const canvasRef = useRef(null);
-    const streamRef = useRef(null);
-
-    // Start/Stop camera when mode changes
+    // Camera Stream Logic
     useEffect(() => {
-        if (mode === 'camera') {
-            startCamera();
-        } else {
-            stopCamera();
-        }
+        let stream = null;
+        const startCamera = async () => {
+            if (mode === 'camera' && videoRef.current) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    videoRef.current.srcObject = stream;
+                } catch (err) {
+                    console.error("Camera Access Error:", err);
+                    setMessage("CAMERA ERROR: CHECK PERMISSIONS");
+                }
+            }
+        };
+
+        if (mode === 'camera') startCamera();
+
+        return () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        };
     }, [mode]);
 
-    const startCamera = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                streamRef.current = stream;
-            }
-        } catch (e) {
-            console.error(e);
-            setMessage({ type: 'error', text: 'Camera access denied or unavailable.' });
-        }
-    }
-
-    const stopCamera = () => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-            streamRef.current = null;
-        }
-    }
-
-    // Polling for face detection in camera mode
+    // Live Detection Loop
     useEffect(() => {
-        if (mode !== 'camera') return;
+        let interval;
+        if (mode === 'camera' && activeSession) {
+            interval = setInterval(async () => {
+                if (videoRef.current && !processing) {
+                    // Capture frame
+                    const canvas = document.createElement('canvas');
+                    canvas.width = videoRef.current.videoWidth;
+                    canvas.height = videoRef.current.videoHeight;
+                    canvas.getContext('2d').drawImage(videoRef.current, 0, 0);
 
-        const interval = setInterval(async () => {
-            if (!videoRef.current || !canvasRef.current || loading) return;
+                    try {
+                        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+                        const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
 
-            // Capture frame to canvas
-            const video = videoRef.current;
-            const canvas = canvasRef.current;
-            if (video.readyState !== 4) return;
-
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Convert to blob and send
-            canvas.toBlob(async (blob) => {
-                if (!blob) return;
-                const data = await detectFaces(blob); // Returns { faces: [[top, right, bottom, left], ... ] }
-                if (data.faces) {
-                    setDetectedFaces(data.faces);
+                        const response = await recognizeImage(activeSession.id, file);
+                        if (response && response.faces) {
+                            setDetectedFaces(response.faces);
+                        }
+                    } catch (e) {
+                        console.error("Frame processing failed", e);
+                    }
                 }
-            }, 'image/jpeg', 0.5); // Low quality for speed
-        }, 300); // 300ms polling
-
+            }, 3000); // 3s polling
+        }
         return () => clearInterval(interval);
-    }, [mode, loading]);
+    }, [mode, activeSession, processing]);
+
 
     const handleFileChange = (e) => {
-        const selected = e.target.files[0];
-        if (selected) {
-            setFile(selected);
-            setPreview(prev => {
-                if (prev) URL.revokeObjectURL(prev);
-                return URL.createObjectURL(selected);
-            });
-            setMessage(null);
-            setResults(null);
+        const f = e.target.files[0];
+        if (f) {
+            setFile(f);
+            setPreview(URL.createObjectURL(f));
             setDetectedFaces([]);
-
-            if (selected.type.startsWith('video/')) {
-                setMode('video');
-            } else if (selected.type.startsWith('image/')) {
-                setMode('image');
-            }
+            setMessage('');
         }
     };
 
-    const handleCapture = () => {
-        if (!videoRef.current || !canvasRef.current) return;
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0);
-
-        canvas.toBlob((blob) => {
-            const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
-            setFile(file);
-            setPreview(URL.createObjectURL(file));
-            setMode('image'); // Switch to image mode to view/upload
-            setMessage(null);
-            setResults(null);
-            setDetectedFaces([]); // Clear overlay
-            stopCamera();
-        }, 'image/jpeg', 0.95);
-    }
-
-    const handleUpload = async () => {
-        if (!file) return;
-
-        setLoading(true);
-        setMessage(null);
-        setResults(null);
-
+    const handleProcess = async () => {
+        if (!activeSession) {
+            alert("Please start a session first.");
+            return;
+        }
+        setProcessing(true);
+        setMessage("PROCESSING MEDIA...");
         try {
-            if (mode === 'image') {
-                const result = await recognizeImage(file);
-                setResults(result);
-                const names = result.faces.map(f => f.name).join(', ');
-                setMessage({ type: 'success', text: `Processed. Found: ${names}` });
-            } else {
-                const result = await recognizeVideo(file);
-                if (result.status === 'processing') {
-                    setMessage({ type: 'success', text: `Job Started: ${result.message}` });
-                } else {
-                    setResults(result);
-                    setMessage({ type: 'success', text: `Processed.` });
-                }
-            }
-        } catch (error) {
-            console.error(error);
-            setMessage({ type: 'error', text: 'Recognition failed.' });
+            if (mode === 'image') await recognizeImage(activeSession.id, file);
+            if (mode === 'video') await recognizeVideo(activeSession.id, file);
+            setMessage("PROCESSING COMPLETE. LOGS UPDATED.");
+        } catch (e) {
+            setMessage("PROCESSING FAILED.");
         } finally {
-            setLoading(false);
+            setProcessing(false);
         }
     };
-
-    // Render detected faces overlay for camera
-    const renderCameraOverlay = () => {
-        if (detectedFaces.length === 0 || !videoRef.current) return null;
-
-        // We map directly 1:1 since video and overlay are same size usually?
-        // Actually CSS scaling might separate them.
-        // Best approach: Use percentage based on videoWidth key?
-        // Let's rely on standard percentages. Since canvas matches video dims, percentages work.
-
-        // Wait, video might be scaled by CSS.
-        // We need detection relative to intrinsic video size.
-        const vw = videoRef.current.videoWidth;
-        const vh = videoRef.current.videoHeight;
-        if (!vw || !vh) return null;
-
-        return detectedFaces.map((face, i) => {
-            const [top, right, bottom, left] = face;
-            return (
-                <div
-                    key={i}
-                    className="absolute border-2 border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.8)] transition-all duration-75"
-                    style={{
-                        top: `${(top / vh) * 100}%`,
-                        left: `${(left / vw) * 100}%`,
-                        width: `${((right - left) / vw) * 100}%`,
-                        height: `${((bottom - top) / vh) * 100}%`,
-                        pointerEvents: 'none'
-                    }}
-                />
-            );
-        });
-    }
-
-    // Helper to render boxes for static images
-    const renderBoxes = () => {
-        if (mode !== 'image' || !results || !results.faces) return null;
-        return results.faces.map((face, i) => {
-            const [top, right, bottom, left] = face.bounding_box;
-            const isUnknown = face.name === "Unknown";
-            const colorClass = isUnknown ? "border-red-500" : "border-green-400";
-            return (
-                <div
-                    key={i}
-                    className={`absolute border-2 ${colorClass} hover:bg-white/20 group/box transition-all`}
-                    style={{
-                        top: `${(top / imgDims.h) * 100}%`,
-                        left: `${(left / imgDims.w) * 100}%`,
-                        width: `${((right - left) / imgDims.w) * 100}%`,
-                        height: `${((bottom - top) / imgDims.h) * 100}%`,
-                    }}
-                >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover/box:opacity-100 z-10 whitespace-nowrap">
-                        {face.name} ({((1 - (face.distance || 0)) * 100).toFixed(0)}%)
-                    </div>
-                </div>
-            );
-        });
-    };
-
-    const renderVideoResults = () => {
-        if (mode !== 'video' || !results || !results.identities) return null;
-        return (
-            <div className="mt-4 grid grid-cols-2 gap-2">
-                {results.identities.map((name, i) => (
-                    <div key={i} className="bg-robocop-900 p-2 rounded border border-robocop-700 text-white text-sm">
-                        {name}
-                    </div>
-                ))}
-            </div>
-        )
-    }
-
-    const onImgLoad = (e) => {
-        setImgDims({ w: e.target.naturalWidth, h: e.target.naturalHeight });
-    }
 
     return (
-        <div className="bg-robocop-800 rounded-xl border border-robocop-700 shadow-lg p-6 flex flex-col gap-6">
-            <div className="flex justify-between items-center border-b border-robocop-700 pb-4">
-                <h2 className="text-xl font-bold text-white">Scanner Input</h2>
-                <div className="flex gap-2 bg-robocop-900 p-1 rounded-lg">
-                    {['image', 'video', 'camera'].map(m => (
-                        <button
-                            key={m}
-                            onClick={() => {
-                                setMode(m);
-                                setFile(null);
-                                setPreview(null);
-                                setMessage(null);
-                                setResults(null);
-                                setDetectedFaces([]);
-                            }}
-                            className={`px-3 py-1 text-sm rounded-md capitalize transition-all ${mode === m ? 'bg-robocop-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            {m}
-                        </button>
-                    ))}
-                </div>
+        <div className="flex flex-col h-full bg-black relative">
+            {/* Toolbar */}
+            <div className="flex border-b border-slate-800 bg-slate-900/50">
+                <button
+                    onClick={() => setMode('camera')}
+                    className={`flex-1 py-3 text-[10px] uppercase font-bold tracking-wider transition-colors ${mode === 'camera' ? 'bg-primary/20 text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-white'
+                        }`}
+                >
+                    Live Cam
+                </button>
+                <button
+                    onClick={() => setMode('image')}
+                    className={`flex-1 py-3 text-[10px] uppercase font-bold tracking-wider transition-colors ${mode === 'image' ? 'bg-primary/20 text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-white'
+                        }`}
+                >
+                    Upload Image
+                </button>
+                <button
+                    onClick={() => setMode('video')}
+                    className={`flex-1 py-3 text-[10px] uppercase font-bold tracking-wider transition-colors ${mode === 'video' ? 'bg-primary/20 text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-white'
+                        }`}
+                >
+                    Upload Video
+                </button>
             </div>
 
-            <div className="flex-1 bg-robocop-900/50 border-2 border-dashed border-robocop-700 rounded-lg flex flex-col items-center justify-center relative min-h-[300px] overflow-hidden group">
-                {mode === 'camera' ? (
-                    <div className="relative w-full h-full flex items-center justify-center bg-black">
+            {/* Viewport */}
+            <div className="flex-1 bg-black relative group overflow-hidden">
+                {/* Grid Overlay - subtle */}
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
+
+                {mode === 'camera' && (
+                    <div className="h-full w-full relative">
                         <video
                             ref={videoRef}
                             autoPlay
                             muted
                             playsInline
-                            className="max-h-[400px] w-full object-contain"
+                            className="w-full h-full object-contain opacity-90"
                         />
-                        {/* Overlay */}
-                        <div className="absolute inset-0 max-h-[400px] w-full pointer-events-none">
-                            {renderCameraOverlay()}
-                        </div>
-                        {/* Hidden canvas for capture/poll */}
-                        <canvas ref={canvasRef} className="hidden" />
-
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
-                            <button
-                                onClick={handleCapture}
-                                className="w-16 h-16 rounded-full bg-white border-4 border-robocop-500 shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
-                            >
-                                <div className="w-12 h-12 rounded-full bg-robocop-500" />
-                            </button>
-                        </div>
-                    </div>
-                ) : !preview ? (
-                    <div className="text-center p-6 relative z-10">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-robocop-800 flex items-center justify-center">
-                            <span className="text-2xl">📷</span>
-                        </div>
-                        <p className="text-slate-400 mb-2">Drag and drop or click to upload</p>
-                        <input
-                            type="file"
-                            accept={mode === 'image' ? "image/*" : "video/*"}
-                            onChange={handleFileChange}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                        />
-                    </div>
-                ) : (
-                    <div className="relative inline-block w-full h-full flex items-center justify-center bg-black/50">
-                        {mode === 'image' ? (
-                            <div className="relative inline-block">
-                                <img
-                                    src={preview}
-                                    onLoad={onImgLoad}
-                                    alt="Preview"
-                                    className="max-h-[400px] object-contain rounded shadow-xl"
-                                />
-                                {renderBoxes()}
+                        {activeSession && (
+                            <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/60 px-2 py-1 rounded text-red-500 text-xs font-bold animate-pulse z-20">
+                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                REC
                             </div>
-                        ) : (
-                            <video src={preview} controls className="max-h-[400px] max-w-full rounded shadow-xl" />
                         )}
-                        <input
-                            type="file"
-                            accept={mode === 'image' ? "image/*" : "video/*"}
-                            onChange={handleFileChange}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
-                        />
-                        <div className="absolute bottom-2 right-2 z-20 pointer-events-none">
-                            <span className="text-xs bg-black/60 text-white px-2 py-1 rounded">Click to Change</span>
-                        </div>
+
+                        {/* Detected Faces Overlay */}
+                        {detectedFaces.map((face, i) => {
+                            if (!videoRef.current) return null;
+                            const videoW = videoRef.current.videoWidth;
+                            const videoH = videoRef.current.videoHeight;
+                            if (!videoW || !videoH) return null;
+
+                            const [top, right, bottom, left] = face.bounding_box;
+
+                            return (
+                                <div
+                                    key={i}
+                                    className="absolute border-2 border-green-500 bg-green-500/10 z-10"
+                                    style={{
+                                        top: `${(top / videoH) * 100}%`,
+                                        left: `${(left / videoW) * 100}%`,
+                                        width: `${((right - left) / videoW) * 100}%`,
+                                        height: `${((bottom - top) / videoH) * 100}%`
+                                    }}
+                                >
+                                    <div className="absolute -top-6 left-0 bg-green-500 text-black text-[10px] font-bold px-1 rounded">
+                                        {face.name} ({Math.round((face.distance || 0) * 100) / 100})
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {(mode === 'image' || mode === 'video') && (
+                    <div className="h-full w-full flex flex-col items-center justify-center p-6 text-slate-500">
+                        {preview ? (
+                            mode === 'image' ? (
+                                <img src={preview} alt="Preview" className="max-h-full max-w-full border border-slate-700 rounded shadow-lg" />
+                            ) : (
+                                <video src={preview} controls className="max-h-full max-w-full border border-slate-700 rounded shadow-lg" />
+                            )
+                        ) : (
+                            <div className="border-2 border-dashed border-slate-800 rounded-lg p-12 text-center">
+                                <div className="text-4xl mb-4 opacity-50">📂</div>
+                                <p className="text-xs uppercase tracking-widest">Select Media File</p>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
 
-            {renderVideoResults()}
-
-            {message && (
-                <div className={`p-3 rounded-lg text-sm text-center border ${message.type === 'success' ? 'bg-green-500/10 border-green-500/30 text-green-300' : 'bg-red-500/10 border-red-500/30 text-red-300'
-                    }`}>
-                    {message.text}
-                </div>
-            )}
-
+            {/* Controls */}
             {mode !== 'camera' && (
-                <button
-                    onClick={handleUpload}
-                    disabled={!file || loading}
-                    className="w-full py-3 bg-robocop-500 hover:bg-robocop-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg shadow-[0_0_15px_rgba(14,165,233,0.4)] transition-all active:scale-[0.98] z-30 relative"
-                >
-                    {loading ? 'Processing...' : 'Analyze Input'}
-                </button>
+                <div className="p-4 border-t border-slate-800 bg-slate-900">
+                    <input
+                        type="file"
+                        accept={mode === 'image' ? "image/*" : "video/*"}
+                        onChange={handleFileChange}
+                        className="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700 mb-4"
+                    />
+                    <button
+                        onClick={handleProcess}
+                        disabled={!file || processing}
+                        className="w-full py-2 bg-primary hover:bg-primary/80 text-slate-950 font-bold uppercase text-xs rounded transition-all disabled:opacity-50"
+                    >
+                        {processing ? 'Processing...' : 'Upload & Analyze'}
+                    </button>
+                    {message && <div className="mt-2 text-[10px] text-center text-primary font-mono">{message}</div>}
+                </div>
             )}
         </div>
     );

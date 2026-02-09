@@ -13,66 +13,54 @@ export default function SessionHistory() {
 
     useEffect(() => {
         fetchHistory();
-        const interval = setInterval(fetchHistory, 10000);
-        return () => clearInterval(interval);
     }, []);
 
     const handleRowClick = async (session) => {
         setSelectedSession(session);
-        setReport(null); // Clear previous
+        setReport(null);
         const data = await getSessionReport(session.id);
         setReport(data);
     };
 
-    const formatDate = (dateString) => {
+    const formatDate = (dateString, timeOnly = false) => {
         if (!dateString) return '-';
-        return new Date(dateString).toLocaleString();
-    };
-
-    const getDuration = (start, end) => {
-        if (!start || !end) return '-';
-        const startTime = new Date(start);
-        const endTime = new Date(end);
-        const diffMs = endTime - startTime;
-        const minutes = Math.floor(diffMs / 60000);
-        return `${minutes} min`;
+        const d = new Date(dateString);
+        return timeOnly ? d.toLocaleTimeString() : d.toLocaleString();
     };
 
     return (
-        <div className="bg-robocop-800 rounded-xl border border-robocop-700 overflow-hidden shadow-lg h-full flex flex-col relative">
-            <div className="bg-robocop-900/50 px-6 py-4 border-b border-robocop-700 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-slate-200 tracking-wider uppercase">Mission Logs</h2>
-                <div className="text-xs text-robocop-400 font-mono">ARCHIVE</div>
+        <div className="bg-slate-950 border border-slate-700 rounded-lg overflow-hidden flex flex-col h-full shadow-md">
+            <div className="bg-slate-900 px-4 py-3 border-b border-slate-700 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wide">Archive Logs</h2>
+                </div>
+                <div className="text-[10px] text-slate-500 uppercase">Records: {history.length}</div>
             </div>
 
-            <div className="overflow-y-auto flex-1 p-4">
+            <div className="overflow-y-auto flex-1 p-0">
                 <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="text-robocop-400 text-sm border-b border-robocop-700/50">
-                            <th className="pb-3 pl-2 font-medium">SESSION NAME</th>
-                            <th className="pb-3 font-medium">STARTED</th>
-                            <th className="pb-3 font-medium">ENDED</th>
-                            <th className="pb-3 font-medium text-right pr-2">DURATION</th>
+                    <thead className="sticky top-0 bg-slate-950 z-10">
+                        <tr className="text-slate-500 text-[10px] uppercase border-b border-slate-800">
+                            <th className="py-2 pl-4 font-semibold">Session Name</th>
+                            <th className="py-2 font-semibold">Date</th>
+                            <th className="py-2 font-semibold">Time</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-robocop-700/30">
+                    <tbody className="divide-y divide-slate-800/50">
                         {history.map((session) => (
                             <tr
                                 key={session.id}
                                 onClick={() => handleRowClick(session)}
-                                className="hover:bg-robocop-700/40 transition-colors cursor-pointer"
+                                className="hover:bg-primary/5 transition-colors cursor-pointer group"
                             >
-                                <td className="py-3 pl-2 font-medium text-white">
+                                <td className="py-2 pl-4 font-medium text-slate-300 group-hover:text-primary">
                                     {session.name}
                                 </td>
-                                <td className="py-3 text-sm text-slate-400">
-                                    {formatDate(session.created_at)}
+                                <td className="py-2 text-slate-500 text-xs">
+                                    {new Date(session.created_at).toLocaleDateString()}
                                 </td>
-                                <td className="py-3 text-sm text-slate-400">
-                                    {formatDate(session.end_time)}
-                                </td>
-                                <td className="py-3 text-right pr-2 text-sm font-mono text-robocop-300">
-                                    {getDuration(session.created_at, session.end_time)}
+                                <td className="py-2 text-slate-500 text-xs text-right pr-4">
+                                    {new Date(session.created_at).toLocaleTimeString()}
                                 </td>
                             </tr>
                         ))}
@@ -83,9 +71,11 @@ export default function SessionHistory() {
             {/* Modal */}
             {selectedSession && (
                 <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-robocop-900 border border-robocop-500 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90%] flex flex-col">
-                        <div className="p-4 border-b border-robocop-700 flex justify-between items-center bg-robocop-800 rounded-t-xl">
-                            <h3 className="text-lg font-bold text-white">Mission Report: {selectedSession.name}</h3>
+                    <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-2xl w-full max-w-2xl max-h-[90%] flex flex-col">
+                        <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-950 rounded-t-lg">
+                            <h3 className="text-sm font-bold text-white uppercase tracking-wide">
+                                Session Report: {selectedSession.name}
+                            </h3>
                             <button
                                 onClick={() => setSelectedSession(null)}
                                 className="text-slate-400 hover:text-white"
@@ -96,48 +86,42 @@ export default function SessionHistory() {
 
                         <div className="p-6 overflow-y-auto flex-1">
                             {!report ? (
-                                <div className="text-center text-robocop-400 animate-pulse">Loading data...</div>
+                                <div className="text-center text-slate-500 py-8">Loading data...</div>
                             ) : (
                                 <div className="grid grid-cols-2 gap-6">
-                                    <div className="bg-green-900/20 border border-green-900/50 rounded-lg p-4">
-                                        <h4 className="text-green-400 font-bold mb-3 flex justify-between">
-                                            <span>PRESENT</span>
-                                            <span className="bg-green-900/50 px-2 rounded text-sm">{report.present.length}</span>
+                                    <div className="border border-green-500/20 bg-green-500/5 rounded p-4">
+                                        <h4 className="text-green-500 text-xs font-bold uppercase mb-3 flex justify-between">
+                                            Present
+                                            <span className="bg-green-500/20 px-2 rounded-full">{report.present.length}</span>
                                         </h4>
-                                        <ul className="space-y-1">
+                                        <ul className="space-y-1 mt-2 max-h-60 overflow-y-auto">
                                             {report.present.map(name => (
-                                                <li key={name} className="text-green-200 text-sm">
+                                                <li key={name} className="text-slate-300 text-xs flex items-center gap-2">
+                                                    <span className="w-1 h-1 bg-green-500 rounded-full"></span>
                                                     {name.replace(/student_\d+_/, '').replace(/_/g, ' ')}
                                                 </li>
                                             ))}
-                                            {report.present.length === 0 && <li className="text-slate-500 italic text-sm">None</li>}
+                                            {report.present.length === 0 && <li className="text-slate-500 italic text-xs">None</li>}
                                         </ul>
                                     </div>
-                                    <div className="bg-red-900/20 border border-red-900/50 rounded-lg p-4">
-                                        <h4 className="text-red-400 font-bold mb-3 flex justify-between">
-                                            <span>ABSENT</span>
-                                            <span className="bg-red-900/50 px-2 rounded text-sm">{report.absent.length}</span>
+
+                                    <div className="border border-red-500/20 bg-red-500/5 rounded p-4">
+                                        <h4 className="text-red-500 text-xs font-bold uppercase mb-3 flex justify-between">
+                                            Absent
+                                            <span className="bg-red-500/20 px-2 rounded-full">{report.absent.length}</span>
                                         </h4>
-                                        <ul className="space-y-1">
+                                        <ul className="space-y-1 mt-2 max-h-60 overflow-y-auto">
                                             {report.absent.map(name => (
-                                                <li key={name} className="text-red-200 text-sm">
+                                                <li key={name} className="text-slate-300 text-xs flex items-center gap-2">
+                                                    <span className="w-1 h-1 bg-red-500 rounded-full"></span>
                                                     {name.replace(/student_\d+_/, '').replace(/_/g, ' ')}
                                                 </li>
                                             ))}
-                                            {report.absent.length === 0 && <li className="text-slate-500 italic text-sm">None</li>}
+                                            {report.absent.length === 0 && <li className="text-slate-500 italic text-xs">None</li>}
                                         </ul>
                                     </div>
                                 </div>
                             )}
-                        </div>
-
-                        <div className="p-4 border-t border-robocop-700 bg-robocop-800/50 text-right">
-                            <button
-                                onClick={() => setSelectedSession(null)}
-                                className="bg-robocop-700 hover:bg-robocop-600 text-white px-4 py-2 rounded text-sm font-medium"
-                            >
-                                Close Report
-                            </button>
                         </div>
                     </div>
                 </div>

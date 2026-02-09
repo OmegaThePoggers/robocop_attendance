@@ -11,49 +11,55 @@ export default function AttendanceTable() {
         };
 
         fetchLogs();
-        const interval = setInterval(fetchLogs, 3000); // Poll every 3 seconds
+        const interval = setInterval(fetchLogs, 3000);
 
         return () => clearInterval(interval);
     }, []);
 
     return (
-        <div className="bg-robocop-800 rounded-xl border border-robocop-700 overflow-hidden shadow-lg h-full flex flex-col">
-            <div className="bg-robocop-900 px-6 py-4 border-b border-robocop-700 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-robocop-400 tracking-wider uppercase">Live Activity Log</h2>
-                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]"></div>
+        <div className="bg-slate-950 border border-slate-700 rounded-lg overflow-hidden flex flex-col h-full shadow-md">
+            <div className="bg-slate-900 px-4 py-3 border-b border-slate-700 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wide">Attendance Log</h2>
+                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">{logs.length} Records</span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                    Live Updates
+                </div>
             </div>
 
-            <div className="overflow-y-auto flex-1 p-4">
+            <div className="overflow-y-auto flex-1 p-0">
                 <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="text-robocop-500 text-sm border-b border-robocop-700/50">
-                            <th className="pb-3 pl-2 font-medium">ID</th>
-                            <th className="pb-3 font-medium">STUDENT</th>
-                            <th className="pb-3 font-medium">TIME</th>
-                            <th className="pb-3 font-medium text-right pr-2">STATUS</th>
+                    <thead className="sticky top-0 bg-slate-950/90 backdrop-blur z-10">
+                        <tr className="text-slate-500 border-b border-slate-800 text-[10px] uppercase tracking-wider">
+                            <th className="py-2 pl-4 font-semibold">Record ID</th>
+                            <th className="py-2 font-semibold">Student Name</th>
+                            <th className="py-2 font-semibold">Time</th>
+                            <th className="py-2 pr-4 text-right font-semibold">Status</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-robocop-700/30">
+                    <tbody className="divide-y divide-slate-800/50">
                         {logs.map((log) => (
-                            <tr key={log.id} className="hover:bg-robocop-700/30 transition-colors">
-                                <td className="py-3 pl-2 text-slate-400 font-mono text-xs">{log.id}</td>
-                                <td className="py-3 font-medium text-slate-200">
+                            <tr key={log.id} className="hover:bg-white/5 transition-colors">
+                                <td className="py-2 pl-4 text-slate-500 text-xs font-mono">{log.id}</td>
+                                <td className="py-2 text-slate-200 text-xs font-medium">
                                     {log.student_name.replace('student_', '').replace(/^\d+_/, '').replace(/_/g, ' ')}
                                 </td>
-                                <td className="py-3 text-slate-400 text-sm">
+                                <td className="py-2 text-slate-400 text-xs font-mono">
                                     {new Date(log.timestamp).toLocaleTimeString()}
                                 </td>
-                                <td className="py-3 text-right pr-2">
-                                    <span className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/20">
-                                        VERIFIED
+                                <td className="py-2 pr-4 text-right">
+                                    <span className="inline-block px-2 py-0.5 text-[10px] font-bold bg-green-500/10 text-green-500 rounded border border-green-500/20">
+                                        Verified
                                     </span>
                                 </td>
                             </tr>
                         ))}
                         {logs.length === 0 && (
                             <tr>
-                                <td colSpan="4" className="py-8 text-center text-slate-500 italic">
-                                    No activity recorded yet...
+                                <td colSpan="4" className="py-8 text-center text-slate-600 text-xs italic">
+                                    Waiting for attendance data...
                                 </td>
                             </tr>
                         )}

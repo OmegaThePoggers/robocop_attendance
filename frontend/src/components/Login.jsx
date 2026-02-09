@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { loginUser, registerUser } from '../api';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,7 +10,13 @@ export default function Login() {
     const [faceIdentity, setFaceIdentity] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [scanLine, setScanLine] = useState(false);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const timer = setTimeout(() => setScanLine(true), 100);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,11 +25,9 @@ export default function Login() {
         try {
             if (isRegistering) {
                 await registerUser(username, password, fullName, faceIdentity);
-                // Auto login or switch to login logic?
-                // Let's just alert and switch to login for simplicity/security
                 setIsRegistering(false);
                 setLoading(false);
-                alert("Account created! Please login.");
+                alert("Registration Successful. Please Login.");
                 return;
             }
 
@@ -37,102 +41,116 @@ export default function Login() {
                 navigate('/dashboard');
             }
         } catch (err) {
-            setError(isRegistering ? 'Registration failed (Username might be taken)' : 'Invalid credentials');
+            setError(isRegistering ? 'Registration Failed: ID Conflict' : 'Login Failed: Invalid Credentials');
         } finally {
             setLoading(false);
         }
     }
 
     return (
-        <div className="min-h-screen bg-robocop-900 flex items-center justify-center p-4">
-            <div className="bg-robocop-800 p-8 rounded-xl border border-robocop-700 shadow-2xl w-full max-w-md">
-                <div className="flex justify-center mb-6">
-                    <div className="h-16 w-16 bg-robocop-500 rounded-lg shadow-[0_0_15px_rgba(14,165,233,0.5)] flex items-center justify-center font-bold text-white text-3xl">
-                        R
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#020617]">
+            {/* Background */}
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.5)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.5)_1px,transparent_1px)] bg-[size:40px_40px] opacity-20"></div>
+
+            <div className={`relative z-10 w-full max-w-md transition-all duration-700 ${scanLine ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700 rounded-lg shadow-2xl overflow-hidden">
+
+                    {/* Header */}
+                    <div className="bg-slate-950 p-6 border-b border-slate-700 text-center">
+                        <div className="inline-block p-3 rounded-full bg-primary/10 mb-3">
+                            <div className="text-2xl text-primary">🎓</div>
+                        </div>
+                        <h2 className="text-xl font-display font-bold text-white tracking-wide uppercase">
+                            {isRegistering ? 'Student Registration' : 'Portal Login'}
+                        </h2>
+                        <p className="text-slate-500 text-xs font-mono mt-1">
+                            {isRegistering ? 'Create New Profile' : 'Access Your Dashboard'}
+                        </p>
+                    </div>
+
+                    <div className="p-8">
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Username / NetID</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-700 rounded px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-slate-700"
+                                    placeholder="Enter ID..."
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Password</label>
+                                <input
+                                    type="password"
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-700 rounded px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-slate-700"
+                                    placeholder="••••••••"
+                                />
+                            </div>
+
+                            {isRegistering && (
+                                <div className="space-y-5 animate-in fade-in slide-in-from-top-2 pt-2">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
+                                        <input
+                                            type="text"
+                                            value={fullName}
+                                            onChange={(e) => setFullName(e.target.value)}
+                                            className="w-full bg-slate-950 border border-slate-700 rounded px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-slate-700"
+                                            placeholder="Student Name..."
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Biometric ID (Optional)</label>
+                                        <input
+                                            type="text"
+                                            value={faceIdentity}
+                                            onChange={(e) => setFaceIdentity(e.target.value)}
+                                            className="w-full bg-slate-950 border border-slate-700 rounded px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-slate-700"
+                                            placeholder="Dataset Filename..."
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={`w-full font-bold text-sm py-3 px-4 rounded transition-all uppercase tracking-widest ${isRegistering
+                                        ? 'bg-primary hover:bg-primary/90 text-slate-950'
+                                        : 'bg-primary hover:bg-primary/90 text-slate-950'
+                                    }`}
+                            >
+                                {loading ? 'Processing...' : (isRegistering ? 'Create Account' : 'Sign In')}
+                            </button>
+                        </form>
+
+                        <div className="mt-6 flex justify-between items-center text-xs">
+                            <span className="text-slate-500">{isRegistering ? "Have an account?" : "Need an account?"}</span>
+                            <button
+                                onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
+                                className="text-primary hover:text-white uppercase tracking-wider hover:underline"
+                            >
+                                {isRegistering ? "Sign In" : "Register"}
+                            </button>
+                        </div>
+
+                        {error && (
+                            <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 text-red-400 text-xs rounded flex items-center gap-2">
+                                <span>⚠️</span> {error}
+                            </div>
+                        )}
                     </div>
                 </div>
-                <h2 className="text-2xl font-bold text-white text-center mb-6 tracking-tight">
-                    {isRegistering ? 'New Recruit' : 'System Access'}
-                </h2>
 
-                {error && (
-                    <div className="bg-red-900/50 border border-red-500/50 text-red-200 px-4 py-2 rounded mb-4 text-sm text-center">
-                        {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-robocop-300 text-sm font-medium mb-1">Username</label>
-                        <input
-                            type="text"
-                            required
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            className="w-full bg-robocop-900 border border-robocop-700 rounded px-3 py-2 text-white focus:outline-none focus:border-robocop-500 transition-colors"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-robocop-300 text-sm font-medium mb-1">Password</label>
-                        <input
-                            type="password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full bg-robocop-900 border border-robocop-700 rounded px-3 py-2 text-white focus:outline-none focus:border-robocop-500 transition-colors"
-                        />
-                    </div>
-
-                    {isRegistering && (
-                        <>
-                            <div>
-                                <label className="block text-robocop-300 text-sm font-medium mb-1">
-                                    Full Name <span className="text-robocop-600">(Optional)</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    className="w-full bg-robocop-900 border border-robocop-700 rounded px-3 py-2 text-white focus:outline-none focus:border-robocop-500 transition-colors"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-robocop-300 text-sm font-medium mb-1">
-                                    Face Alias <span className="text-robocop-600">(e.g. "student_1_marie_curie")</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Matches your filename in dataset"
-                                    value={faceIdentity}
-                                    onChange={(e) => setFaceIdentity(e.target.value)}
-                                    className="w-full bg-robocop-900 border border-robocop-700 rounded px-3 py-2 text-white focus:outline-none focus:border-robocop-500 transition-colors"
-                                />
-                                <p className="text-xs text-slate-500 mt-1">
-                                    If your dataset image is named "student_1_marie_curie.jpg", enter "student_1_marie_curie" here to link your face.
-                                </p>
-                            </div>
-                        </>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-robocop-500 hover:bg-robocop-400 text-white font-bold py-2 px-4 rounded transition-all shadow-lg disabled:opacity-50"
-                    >
-                        {loading ? 'Processing...' : (isRegistering ? 'CREATE ACCOUNT' : 'INITIALIZE SESSION')}
-                    </button>
-                </form>
-
-                <div className="mt-6 text-center">
-                    <button
-                        onClick={() => {
-                            setIsRegistering(!isRegistering);
-                            setError('');
-                        }}
-                        className="text-sm text-robocop-400 hover:text-white underline"
-                    >
-                        {isRegistering ? 'Already have an account? Login' : 'Need an account? Sign Up'}
-                    </button>
+                <div className="mt-4 text-center">
+                    <p className="text-[10px] text-slate-600 font-mono">SECURE ACADEMIC PORTAL ACCESS</p>
                 </div>
             </div>
         </div>

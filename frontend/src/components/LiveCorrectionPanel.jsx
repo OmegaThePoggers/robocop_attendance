@@ -3,16 +3,13 @@ import { getUnknowns, resolveUnknown, getAbsentees } from '../api';
 
 export default function LiveCorrectionPanel() {
     const [unknowns, setUnknowns] = useState([]);
-    const [students, setStudents] = useState([]); // Candidates for assignment
-    const [loading, setLoading] = useState(false);
-
-    // For resolution selection
+    const [students, setStudents] = useState([]);
     const [selectedStudent, setSelectedStudent] = useState({});
 
     const fetchData = async () => {
         const u = await getUnknowns();
         setUnknowns(u);
-        const s = await getAbsentees(); // We only care about absentees for assignment usually
+        const s = await getAbsentees();
         setStudents(s);
     }
 
@@ -28,57 +25,57 @@ export default function LiveCorrectionPanel() {
 
         try {
             await resolveUnknown(unknownId, studentName);
-            // Optimistic update
             setUnknowns(prev => prev.filter(u => u.id !== unknownId));
             setStudents(prev => prev.filter(s => s !== studentName));
         } catch (e) {
-            alert('Failed to assign student');
+            alert('Assignment Failed');
         }
     }
 
     if (unknowns.length === 0) return null;
 
     return (
-        <div className="bg-robocop-800 rounded-xl border border-robocop-700 shadow-lg p-6 mb-6 animate-fade-in">
+        <div className="bg-yellow-900/10 border border-yellow-500/30 rounded-lg p-4 mb-4 relative overflow-hidden">
             <div className="flex items-center gap-3 mb-4">
-                <div className="bg-orange-500/20 text-orange-400 p-2 rounded-lg">
-                    ⚠️
-                </div>
+                <div className="text-yellow-500 animate-pulse">⚠️</div>
                 <div>
-                    <h3 className="text-lg font-bold text-white">Unknown Faces Detected</h3>
-                    <p className="text-sm text-robocop-400">Resolve these faces to mark attendance.</p>
+                    <h3 className="text-sm font-bold text-yellow-500 uppercase tracking-wide">Unidentified Students</h3>
+                    <p className="text-[10px] text-yellow-500/70">Please identify the following faces manually.</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {unknowns.map(unknown => (
-                    <div key={unknown.id} className="bg-robocop-900 border border-robocop-700 p-3 rounded-lg flex gap-3">
+                    <div key={unknown.id} className="bg-slate-900 border border-slate-700 rounded p-2 flex gap-3">
                         <img
                             src={`http://localhost:8000/static/${unknown.image_path}`}
-                            alt="Unknown Face"
-                            className="w-16 h-16 rounded object-cover border border-robocop-600"
+                            alt="Unknown"
+                            className="w-16 h-16 object-cover rounded border border-slate-600"
                         />
-                        <div className="flex-1 flex flex-col justify-between">
-                            <span className="text-xs text-slate-500">
+
+                        <div className="flex-1 flex flex-col justify-between gap-2">
+                            <span className="text-[10px] text-slate-500 font-mono">
                                 {new Date(unknown.timestamp).toLocaleTimeString()}
                             </span>
 
-                            <select
-                                className="flex-1 bg-robocop-800 border border-robocop-600 text-white text-xs rounded px-2 py-1 focus:outline-none"
-                                value={selectedStudent[unknown.id] || ''}
-                                onChange={(e) => {
-                                    const studentName = e.target.value;
-                                    if (studentName) {
-                                        handleAssign(unknown.id);
-                                    }
-                                    setSelectedStudent({ ...selectedStudent, [unknown.id]: studentName });
-                                }}
-                            >
-                                <option value="">Select Student...</option>
-                                {students.map(s => (
-                                    <option key={s} value={s}>{s}</option>
-                                ))}
-                            </select>
+                            <div className="relative">
+                                <select
+                                    className="w-full bg-slate-950 border border-slate-700 text-white text-[10px] rounded px-2 py-1 focus:outline-none focus:border-yellow-500 appearance-none"
+                                    value={selectedStudent[unknown.id] || ''}
+                                    onChange={(e) => {
+                                        const studentName = e.target.value;
+                                        if (studentName) {
+                                            handleAssign(unknown.id);
+                                        }
+                                        setSelectedStudent({ ...selectedStudent, [unknown.id]: studentName });
+                                    }}
+                                >
+                                    <option value="">Identify Student...</option>
+                                    {students.map(s => (
+                                        <option key={s} value={s}>{s.replace('student_', '')}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     </div>
                 ))}
