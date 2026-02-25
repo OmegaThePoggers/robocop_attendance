@@ -32,8 +32,32 @@ export async function loginUser(username, password) {
     return await response.json();
 }
 
-export async function registerUser(username, password, fullName, faceIdentity) {
+export async function registerUser(username, password, fullName, sapId, file, sourceParams = {}) {
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('password', password);
+    formData.append('full_name', fullName);
+    formData.append('sap_id', sapId);
+    formData.append('role', 'student');
+    formData.append('selfie', file);
+
+    const headers = getAuthHeaders(null); // Let browser set Content-Type multipart boundary
+
     const response = await fetch(`${API_URL}/register`, {
+        method: 'POST',
+        headers,
+        body: formData
+    });
+
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'Registration failed');
+    }
+    return await response.json();
+}
+
+export async function registerTeacher(username, password, fullName) {
+    const response = await fetch(`${API_URL}/register-teacher`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -42,8 +66,7 @@ export async function registerUser(username, password, fullName, faceIdentity) {
             username,
             password,
             full_name: fullName,
-            face_identity: faceIdentity,
-            role: 'student'
+            role: 'teacher'
         })
     });
     if (!response.ok) {
@@ -79,8 +102,8 @@ export async function getAbsentees() {
     }
 }
 
-export async function createSession(name) {
-    const response = await fetch(`${API_URL}/sessions?name=${encodeURIComponent(name)}`, {
+export async function createSession(name, classId) {
+    const response = await fetch(`${API_URL}/sessions?name=${encodeURIComponent(name)}&class_id=${classId}`, {
         method: 'POST',
         headers: getAuthHeaders()
     });
@@ -334,5 +357,74 @@ export async function getAuditLogs() {
         return await response.json();
     } catch {
         return [];
+    }
+}
+
+export async function getClasses() {
+    try {
+        const response = await fetch(`${API_URL}/admin/classes`, {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch classes');
+        return await response.json();
+    } catch {
+        return [];
+    }
+}
+
+export async function createClass(name, description) {
+    const response = await fetch(`${API_URL}/admin/classes`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ name, description })
+    });
+    if (!response.ok) throw new Error('Failed to create class');
+    return await response.json();
+}
+
+export async function getUnassignedStudents() {
+    try {
+        const response = await fetch(`${API_URL}/admin/users/students/unassigned`, {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch unassigned students');
+        return await response.json();
+    } catch {
+        return [];
+    }
+}
+
+export async function assignStudentClass(userId, classId) {
+    const response = await fetch(`${API_URL}/admin/users/${userId}/assign-class`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ class_id: classId })
+    });
+    if (!response.ok) throw new Error('Failed to assign class');
+    return await response.json();
+}
+
+// Database Viewer APIs
+export async function getDatabaseTables() {
+    try {
+        const response = await fetch(`${API_URL}/admin/database/tables`, {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch tables');
+        return await response.json();
+    } catch {
+        return [];
+    }
+}
+
+export async function getTableData(tableName, limit = 100, offset = 0) {
+    try {
+        const response = await fetch(`${API_URL}/admin/database/${tableName}?limit=${limit}&offset=${offset}`, {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch table data');
+        return await response.json();
+    } catch {
+        return { data: [], total: 0 };
     }
 }

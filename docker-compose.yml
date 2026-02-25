@@ -1,33 +1,62 @@
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: robocop_db
+    restart: always
+    environment:
+      POSTGRES_USER: robocop_user
+      POSTGRES_PASSWORD: robocop_password
+      POSTGRES_DB: robocop_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U robocop_user -d robocop_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
-    build: 
+    build:
       context: ./backend
+    container_name: robocop_backend
     ports:
       - "8000:8000"
     volumes:
-      # Persist the database
-      - ./backend/attendance.db:/app/attendance.db
-      # Mount the dataset directory so user can add photos on host and they appear in container
+      # Mount dataset for facial recognition images
       - ./dataset:/app/dataset
+      # Mount static files to serve evidence/crops
+      - ./backend/static:/app/static
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
       - DATASET_PATH=/app/dataset
+      - DATABASE_URL=postgresql://robocop_user:robocop_password@db:5432/robocop_db
+      - ENVIRONMENT=development
+    depends_on:
+      db:
+        condition: service_healthy
 
   frontend:
-    build: 
+    build:
       context: ./frontend
+    container_name: robocop_frontend
     ports:
       - "5173:5173"
     volumes:
-      # Enable hot-reloading by mounting source code
+      # Mount source code for hot-reloading
       - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/vite.config.js:/app/vite.config.js
     environment:
-      # Tell Vite where the backend is (from browser perspective, it's localhost or the exposed port)
-      # But wait, Vite runs in browser. Browser sees localhost:8000.
-      # So we don't strictly need internal networking for the client-side calls.
+      # Vite looks for this to hit our local FastAPI container
       - VITE_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true # Helps with hot reload on some Windows host mounts
+    restart: unless-stopped
     depends_on:
       - backend
 
-# We assume "dataset" exists in the project root.
+volumes:
+  pgdata:

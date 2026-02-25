@@ -1,68 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar for Cyber-Industrial feel */
+@layer base {
+  body {
+    @apply bg-dark-bg text-dark-text font-sans antialiased selection:bg-primary-500/30;
+  }
+}
+
+@layer components {
+  /* Glassmorphism card utility */
+  .glass-panel {
+    @apply bg-dark-card/60 backdrop-blur-md border border-dark-border/50 shadow-glass rounded-2xl;
+  }
+  
+  .glass-panel-heavy {
+    @apply bg-dark-bg/80 backdrop-blur-lg border border-dark-border shadow-glow rounded-3xl;
+  }
+  
+  /* Primary Button */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-primary-500/20 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 bg-dark-border/50 hover:bg-dark-border text-dark-text font-medium rounded-xl transition-all duration-200 border border-dark-border/50 active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:shadow-glow;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center px-4 py-2 bg-red-600/90 hover:bg-red-500 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-red-500/20 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  /* Inputs */
+  .input-field {
+    @apply w-full px-4 py-3 bg-dark-bg/50 border border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all duration-200 text-dark-text placeholder-dark-muted;
+  }
+}
+
+/* Custom Scrollbar for sleek UI */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #020617;
+  @apply bg-dark-bg;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border: 1px solid #334155;
+  @apply bg-dark-border rounded-full hover:bg-primary-600/50 transition-colors;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #00f0ff;
-  box-shadow: 0 0 5px #00f0ff;
+/* Base animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-body {
-  background-color: #020617;
-  color: #e2e8f0;
-  font-family: 'Rajdhani', sans-serif;
-  overflow-x: hidden;
-  position: relative;
+.animate-slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* CRT Scanline Effect Overlay */
-body::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom,
-      rgba(255, 255, 255, 0),
-      rgba(255, 255, 255, 0) 50%,
-      rgba(0, 0, 0, 0.2) 50%,
-      rgba(0, 0, 0, 0.2));
-  background-size: 100% 4px;
-  pointer-events: none;
-  z-index: 50;
-  opacity: 0.3;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* Vignette */
-body::after {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: radial-gradient(circle, transparent 60%, #000000 100%);
-  pointer-events: none;
-  z-index: 49;
-}
-
-::selection {
-  background-color: #00f0ff;
-  color: #000000;
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }

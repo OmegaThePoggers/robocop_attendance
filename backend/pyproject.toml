@@ -15,5 +15,6 @@ dependencies = [
     "sqlmodel",
     "passlib[argon2]",
     "python-jose[cryptography]",
-    "slowapi"
+    "slowapi",
+    "psycopg2-binary"
 ]

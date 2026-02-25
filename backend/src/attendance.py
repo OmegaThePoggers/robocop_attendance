@@ -2,14 +2,14 @@ from datetime import datetime, timedelta
 import json
 from typing import List, Optional, Set, Dict
 from sqlmodel import Session, select, func
-from .models import AttendanceRecord, AttendanceSession, UnknownFace
+from .models import AttendanceRecord, AttendanceSession, UnknownFace, AttendanceSource
 from .database import engine
 
 class AttendanceService:
     def __init__(self):
         pass
 
-    def create_session(self, name: str) -> AttendanceSession:
+    def create_session(self, name: str, class_id: Optional[int] = None) -> AttendanceSession:
         with Session(engine) as session:
             # Deactivate any currently active sessions? 
             # For simplicity, let's say yes, only one active session at a time.
@@ -18,11 +18,23 @@ class AttendanceService:
                 s.is_active = False
                 session.add(s)
             
-            new_session = AttendanceSession(name=name)
+            new_session = AttendanceSession(name=name, class_id=class_id)
             session.add(new_session)
             session.commit()
             session.refresh(new_session)
             return new_session
+
+    def add_attendance_source(self, session_id: int, file_path: str, media_type: str) -> AttendanceSource:
+        with Session(engine) as session:
+            new_source = AttendanceSource(
+                session_id=session_id,
+                file_path=file_path,
+                media_type=media_type
+            )
+            session.add(new_source)
+            session.commit()
+            session.refresh(new_source)
+            return new_source
 
     def end_active_session(self) -> Optional[AttendanceSession]:
         with Session(engine) as session:

@@ -6,35 +6,37 @@ export default {
   ],
   theme: {
     extend: {
-      colors: {
-        background: '#020617', // Slate 950 - Deepest void
-        surface: '#0f172a',    // Slate 900 - Panel background
-        primary: '#00f0ff',    // Neon Cyan - Main accents
-        secondary: '#bd00ff',  // Neon Purple - Secondary accents
-        alert: '#ff003c',      // Cyber Red - Errors/Alerts
-        success: '#00ff9f',    // Cyber Green - Success
-        warning: '#fcee0a',    // Cyber Yellow - Warning
-        muted: '#64748b',      // Slate 500 - Muted text
-      },
       fontFamily: {
-        sans: ['Rajdhani', 'sans-serif'],
-        display: ['Orbitron', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'monospace'],
+        sans: ['Inter', 'sans-serif'],
+      },
+      colors: {
+        primary: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7', // Brand primary
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+          950: '#082f49',
+        },
+        dark: {
+          bg: '#0B0F19',
+          card: '#111827',
+          border: '#1F2937',
+          text: '#F9FAFB',
+          muted: '#9CA3AF'
+        }
       },
       boxShadow: {
-        'neon-blue': '0 0 5px theme("colors.primary"), 0 0 20px theme("colors.primary")',
-        'neon-purple': '0 0 5px theme("colors.secondary"), 0 0 20px theme("colors.secondary")',
-        'neon-red': '0 0 5px theme("colors.alert"), 0 0 20px theme("colors.alert")',
+        'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
+        'glow': '0 0 20px rgba(2, 132, 199, 0.15)',
       },
-      animation: {
-        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'scanline': 'scanline 8s linear infinite',
-      },
-      keyframes: {
-        scanline: {
-          '0%': { transform: 'translateY(-100%)' },
-          '100%': { transform: 'translateY(100%)' },
-        }
+      backdropBlur: {
+        'xs': '2px',
       }
     },
   },

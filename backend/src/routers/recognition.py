@@ -38,6 +38,22 @@ async def recognize_image(
         # Recognize
         results = dependencies.recognition_service.recognize_image(rgb_img)
         
+        # Save image as AttendanceSource if there's a session
+        source_id = None
+        file_path = None
+        if session_id and attendance_service and results:
+            session_dir = f"static/sessions/{session_id}"
+            os.makedirs(session_dir, exist_ok=True)
+            filename = f"frame_{uuid.uuid4()}.jpg"
+            file_path = os.path.join(session_dir, filename)
+            cv2.imwrite(file_path, img) # Save original BGR for saving
+            
+            # Create AttendanceSource
+            db_path = f"sessions/{session_id}/{filename}"
+            source_record = attendance_service.add_attendance_source(session_id, db_path, "image")
+            source_id = source_record.id
+            file_path = db_path
+
         # Process results
         for res in results:
             name = res['name']
@@ -45,21 +61,27 @@ async def recognize_image(
                 if name != "Unknown":
                     # Mark attendance
                     if attendance_service:
+                        metadata = {"source": "live_camera"}
+                        if source_id:
+                            metadata["source_id"] = source_id
+                            metadata["file_path"] = file_path
+                            metadata["bounding_box"] = res['bounding_box']
+                            
                         attendance_service.mark_attendance(
                             name, 
                             1.0 - res['distance'], 
                             session_id,
-                            metadata={"source": "live_camera"}
+                            metadata=metadata
                         )
                 else:
                     # Register Unknown
                     # Save image to static/unknowns
                     if attendance_service:
                          # Generate filename
-                         filename = f"unknown_{uuid.uuid4()}.jpg"
-                         filepath = os.path.join("static/unknowns", filename)
-                         cv2.imwrite(filepath, img) # Save original BGR
-                         attendance_service.register_unknown(session_id, f"unknowns/{filename}", 1.0 - res['distance'])
+                         unknown_filename = f"unknown_{uuid.uuid4()}.jpg"
+                         unknown_filepath = os.path.join("static/unknowns", unknown_filename)
+                         cv2.imwrite(unknown_filepath, img) # Save original BGR
+                         attendance_service.register_unknown(session_id, f"unknowns/{unknown_filename}", 1.0 - res['distance'])
         
         return {"faces": results}
     except Exception as e:

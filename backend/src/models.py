@@ -1,14 +1,28 @@
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, Relationship
+
+class ClassGroup(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, index=True)
+    description: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    sessions: List["AttendanceSession"] = Relationship(back_populates="class_group")
+    students: List["User"] = Relationship(back_populates="class_group")
 
 class AttendanceSession(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
+    class_id: Optional[int] = Field(default=None, foreign_key="classgroup.id", index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     end_time: Optional[datetime] = None
     is_active: bool = Field(default=True)
+    
+    # Relationships
+    class_group: Optional[ClassGroup] = Relationship(back_populates="sessions")
 
 class AttendanceRecord(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -71,6 +85,10 @@ class User(SQLModel, table=True):
     sap_id: Optional[str] = None
     # For robust mapping, we might store "face_identity" here
     face_identity: Optional[str] = None 
+    class_id: Optional[int] = Field(default=None, foreign_key="classgroup.id", index=True)
+
+    # Relationships
+    class_group: Optional[ClassGroup] = Relationship(back_populates="students")
 
 class UserCreate(SQLModel):
     username: str
@@ -78,6 +96,7 @@ class UserCreate(SQLModel):
     full_name: Optional[str] = None
     role: UserRole = UserRole.STUDENT
     face_identity: Optional[str] = None 
+    class_id: Optional[int] = None
 
 class AuditLog(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

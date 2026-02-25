@@ -1,10 +1,15 @@
+import os
 from sqlmodel import SQLModel, create_engine, Session
 
-sqlite_file_name = "attendance.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+# Try to get DATABASE_URL from environment (Docker Compose provides this)
+# Fallback to a local postgres connection if running outside of Docker but with a local PG server
+database_url = os.getenv(
+    "DATABASE_URL", 
+    "postgresql://robocop_user:robocop_password@localhost:5432/robocop_db"
+)
 
-connect_args = {"check_same_thread": False}
-engine = create_engine(sqlite_url, connect_args=connect_args)
+# SQLite uses check_same_thread, Postgres doesn't need it.
+engine = create_engine(database_url)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)

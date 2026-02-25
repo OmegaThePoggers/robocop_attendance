@@ -16,8 +16,8 @@ def get_sessions(current_user: User = Depends(get_current_user)):
      return attendance_service.get_session_history()
 
 @router.post("/sessions", response_model=AttendanceSession)
-def create_session(name: str, current_user: User = Depends(allow_teacher_admin)):
-    return attendance_service.create_session(name)
+def create_session(name: str, class_id: int, current_user: User = Depends(allow_teacher_admin)):
+    return attendance_service.create_session(name, class_id)
 
 @router.get("/sessions/active", response_model=AttendanceSession)
 def get_active_session(current_user: User = Depends(get_current_user)): 

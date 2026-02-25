@@ -1,18 +1,23 @@
 FROM node:22-alpine
 
+# Add bash and curl for potential debugging
+RUN apk add --no-cache bash curl
+
 WORKDIR /app
 
-# Copy package files
+# Copy package files first to leverage Docker cache
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies cleanly
+RUN npm ci
 
-# Copy source code
+# Copy rest of the application
 COPY . .
 
-# Expose Vite port
+# Expose Vite default port
 EXPOSE 5173
 
-# Start development server (host 0.0.0.0 is needed for container access)
-CMD ["npm", "run", "dev", "--", "--host"]
+# Ensure Vite runs bound to all interfaces
+ENV HOST=0.0.0.0
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

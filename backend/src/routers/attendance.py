@@ -59,7 +59,11 @@ def get_absentees_for_active_session(current_user: User = Depends(get_current_us
     from sqlmodel import Session as SQLSession
 
     with SQLSession(engine) as db:
-        users = db.exec(select(User).where(User.role == UserRole.STUDENT)).all()
+        if session.class_id:
+            users = db.exec(select(User).where(User.role == UserRole.STUDENT, User.class_id == session.class_id)).all()
+        else:
+            users = db.exec(select(User).where(User.role == UserRole.STUDENT)).all()
+            
         students = [u.username for u in users]
 
     return attendance_service.get_absentees_for_session(session.id, students)
