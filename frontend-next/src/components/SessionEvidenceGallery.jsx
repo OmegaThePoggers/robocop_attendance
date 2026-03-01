@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getSessionEvidence } from '../lib/api';
+import { getSessionEvidence, STATIC_URL } from '../lib/api';
 
 export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) {
     const [evidence, setEvidence] = useState([]);
@@ -72,7 +72,7 @@ export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) 
 
         // Format: [top, right, bottom, left]
         if (x2 - x1 > 10 && y2 - y1 > 10) {
-            onSelectEvidence(selectedImage.id, [y1, x2, y2, x1], `http://localhost:8000/static/${selectedImage.file_path}`);
+            onSelectEvidence(selectedImage.id, [y1, x2, y2, x1], `${STATIC_URL}/${selectedImage.file_path}`);
         } else {
             setDragStart(null);
             setDragEnd(null);
@@ -116,7 +116,7 @@ export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) 
 
                 <div className="relative rounded-xl border border-primary-500/30 group cursor-crosshair overflow-hidden bg-black/80 flex justify-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
                     <img
-                        src={`http://localhost:8000/static/${selectedImage.file_path}`}
+                        src={`${STATIC_URL}/${selectedImage.file_path}`}
                         className="max-w-full max-h-[50vh] object-contain select-none"
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
@@ -166,10 +166,10 @@ export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) 
                             <div className="absolute top-2 right-2 text-[10px] uppercase font-bold tracking-wider bg-black/60 backdrop-blur-md text-white px-2 py-0.5 rounded flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> VID
                             </div>
-                            <video src={`http://localhost:8000/static/${item.file_path}`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                            <video src={`${STATIC_URL}/${item.file_path}`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                         </div>
                     ) : (
-                        <img src={`http://localhost:8000/static/${item.file_path}`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="Evidence Thumbnail" />
+                        <img src={`${STATIC_URL}/${item.file_path}`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="Evidence Thumbnail" />
                     )}
 
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-6 pb-2 px-3 text-[10px] text-slate-300 font-mono truncate">

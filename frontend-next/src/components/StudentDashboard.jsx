@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getSessionHistory, getMyAttendance, createDispute, getMyDisputes } from '../lib/api';
+import { getSessionHistory, getMyAttendance, createDispute, getMyDisputes, STATIC_URL } from '../lib/api';
 import { useRouter } from 'next/navigation';
 import SessionEvidenceGallery from './SessionEvidenceGallery';
 
@@ -60,7 +60,7 @@ export default function StudentDashboard() {
                     setEvidenceData({
                         sourceId: dispute.attendance_source_id,
                         coords: dispute.selected_face_coords,
-                        previewUrl: `http://localhost:8000/static/${dispute.evidence_path}`
+                        previewUrl: `${STATIC_URL}/${dispute.evidence_path}`
                     });
                 }
             }
@@ -68,7 +68,7 @@ export default function StudentDashboard() {
             setEvidenceData({
                 sourceId: metadata.source_id,
                 coords: metadata.bounding_box, // raw array [top, right, bottom, left]
-                previewUrl: metadata.file_path ? `http://localhost:8000/static/${metadata.file_path}` : null
+                previewUrl: metadata.file_path ? `${STATIC_URL}/${metadata.file_path}` : null
             });
         }
     }

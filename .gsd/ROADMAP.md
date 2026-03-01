@@ -16,7 +16,7 @@
 **Objective**: Simplify the FastAPI backend logic, remove ambiguity and bugs, and document endpoints clearly for optimal connections. Ensure current routes are reliable.
 
 ### Phase 2: Frontend Migration to Next.js (Setup & Core)
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
 **Objective**: Initialize a Next.js project (App Router recommended), set up Tailwindcss, and migrate core layout, authentication, and routing logic from `vite` to Next.js.
 
 ### Phase 3: Frontend Feature Completion & API Connections

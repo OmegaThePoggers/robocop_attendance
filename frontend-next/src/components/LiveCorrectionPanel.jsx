@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getUnknowns, resolveUnknown, getAbsentees } from '../lib/api';
+import { getUnknowns, resolveUnknown, getAbsentees, STATIC_URL } from '../lib/api';
 
 export default function LiveCorrectionPanel() {
     const [unknowns, setUnknowns] = useState([]);
@@ -63,7 +63,7 @@ export default function LiveCorrectionPanel() {
                     <div key={unknown.id} className="bg-dark-bg/60 border border-dark-border/80 rounded-lg p-3 flex gap-4 hover:border-amber-500/50 transition-colors group">
                         <div className="relative shrink-0 w-20 h-20">
                             <img
-                                src={`http://localhost:8000/static/${unknown.image_path}`}
+                                src={`${STATIC_URL}/${unknown.image_path}`}
                                 alt="Unknown"
                                 className="w-full h-full object-cover rounded-md border border-dark-border"
                             />

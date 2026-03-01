@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getAllDisputes, resolveDispute } from '../lib/api';
+import { getAllDisputes, resolveDispute, STATIC_URL } from '../lib/api';
 
 export default function DisputeList() {
     const [disputes, setDisputes] = useState([]);
@@ -71,8 +71,8 @@ export default function DisputeList() {
                             <div className="flex justify-between items-start mb-2">
                                 <span className="text-sm font-bold text-white group-hover:text-secondary-300 transition-colors">{d.student_name}</span>
                                 <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shadow-sm ${d.status === 'pending'
-                                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                                        : 'bg-dark-bg text-dark-muted border border-dark-border/50'
+                                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                                    : 'bg-dark-bg text-dark-muted border border-dark-border/50'
                                     }`}>
                                     {d.status}
                                 </span>
@@ -141,7 +141,7 @@ export default function DisputeList() {
                                             <div className="relative w-full h-full flex items-center justify-center p-2">
                                                 <div className="relative inline-block max-w-full max-h-full">
                                                     <img
-                                                        src={`http://localhost:8000/static/${viewingEvidence.evidence_path}`}
+                                                        src={`${STATIC_URL}/${viewingEvidence.evidence_path}`}
                                                         className="max-w-full max-h-full object-contain rounded border border-dark-border/50 shadow-2xl"
                                                         alt="Evidence"
                                                     />

@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export const STATIC_URL = `${API_URL}/static`;
 
 function getAuthHeaders(contentType = 'application/json') {
     const token = localStorage.getItem('token');

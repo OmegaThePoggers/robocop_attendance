@@ -16,6 +16,11 @@ dist/
 
 # Environment
 .env
+.env.local
+.env*.local
+
+# Next.js
+.next/
 
 # Logs
 *.log
