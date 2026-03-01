@@ -46,6 +46,7 @@ async def lifespan(app: FastAPI):
 def _seed_default_admin():
     """Create a default admin user if no admin exists in the database."""
     from sqlmodel import Session, select
+    from .database import engine
     from .models import User, UserRole
     from .auth_service import get_password_hash
 
