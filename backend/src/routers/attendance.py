@@ -1,69 +1,76 @@
-from typing import List, Optional
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
-from ..dependencies import get_current_user, attendance_service
-from ..models import User, AttendanceRecord
+from sqlmodel import Session, select
 
-from ..dependencies import get_current_user, attendance_service, allow_teacher_admin
+from ..dependencies import (
+    get_current_user,
+    get_session,
+    allow_teacher_admin,
+    get_attendance_service,
+)
+from ..models import User, AttendanceRecord, UserRole
+from ..attendance import AttendanceService
 
 router = APIRouter(tags=["attendance"])
 
+
 @router.get("/attendance", response_model=List[AttendanceRecord])
-def get_all_attendance(limit: int = 100, current_user: User = Depends(allow_teacher_admin)):
-    return attendance_service.get_all_records(limit)
+def get_all_attendance(
+    limit: int = 100,
+    current_user: User = Depends(allow_teacher_admin),
+    svc: AttendanceService = Depends(get_attendance_service),
+):
+    return svc.get_all_records(limit)
+
 
 @router.post("/attendance/manual", response_model=AttendanceRecord)
 def manual_mark_attendance(
-    student_name: str, 
-    session_id: int, 
-    current_user: User = Depends(allow_teacher_admin)
+    student_name: str,
+    session_id: int,
+    current_user: User = Depends(allow_teacher_admin),
+    svc: AttendanceService = Depends(get_attendance_service),
 ):
-    # Manual mark logic
-    record = attendance_service.mark_attendance(
-        student_name, 
-        confidence=1.0, 
-        session_id=session_id, 
-        metadata={"source": "manual_override", "marked_by": current_user.username}
+    record = svc.mark_attendance(
+        student_name,
+        confidence=1.0,
+        session_id=session_id,
+        metadata={"source": "manual_override", "marked_by": current_user.username},
     )
     if not record:
-        raise HTTPException(status_code=400, detail="Could not mark attendance (Duplicate or Invalid Session)")
+        raise HTTPException(
+            status_code=400,
+            detail="Could not mark attendance (Duplicate or Invalid Session)",
+        )
     return record
 
 
 @router.get("/attendance/my", response_model=List[AttendanceRecord])
-def get_my_attendance(current_user: User = Depends(get_current_user)):
+def get_my_attendance(
+    current_user: User = Depends(get_current_user),
+    svc: AttendanceService = Depends(get_attendance_service),
+):
     aliases = []
     if current_user.face_identity:
         aliases.append(current_user.face_identity)
-        
-    return attendance_service.get_student_history(current_user.username, aliases)
+    return svc.get_student_history(current_user.username, aliases)
+
 
 @router.get("/attendance/absent", response_model=List[str])
-def get_absentees_for_active_session(current_user: User = Depends(get_current_user)): # Teacher only?
-    # Logic from main.py? 
-    # Ah, main.py didn't have this explicitly in the snippet I saw, 
-    # but frontend calls /attendance/absent.
-    # Let's check main.py again if I missed it, or implement it afresh.
-    # It was likely using `attendance_service.get_absentees_for_session`.
-    
-    session = attendance_service.get_active_session()
-    if not session:
+def get_absentees_for_active_session(
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+    svc: AttendanceService = Depends(get_attendance_service),
+):
+    active = svc.get_active_session()
+    if not active:
         return []
-    
-    # We need all students list.
-    # Ideally should inject Session.
-    # I'll import get_session and use it.
-    from ..dependencies import get_session
-    from sqlmodel import select
-    from ..models import User, UserRole
-    from ..database import engine
-    from sqlmodel import Session as SQLSession
 
-    with SQLSession(engine) as db:
-        if session.class_id:
-            users = db.exec(select(User).where(User.role == UserRole.STUDENT, User.class_id == session.class_id)).all()
-        else:
-            users = db.exec(select(User).where(User.role == UserRole.STUDENT)).all()
-            
-        students = [u.username for u in users]
+    if active.class_id:
+        users = session.exec(
+            select(User).where(User.role == UserRole.STUDENT, User.class_id == active.class_id)
+        ).all()
+    else:
+        users = session.exec(select(User).where(User.role == UserRole.STUDENT)).all()
 
-    return attendance_service.get_absentees_for_session(session.id, students)
+    students = [u.username for u in users]
+    return svc.get_absentees_for_session(active.id, students)
