@@ -1,0 +1,122 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ── Tailwind v4 Theme Configuration ── */
+@theme {
+    --font-sans: 'Inter', sans-serif;
+
+    /* Primary palette */
+    --color-primary-50: #f0f9ff;
+    --color-primary-100: #e0f2fe;
+    --color-primary-200: #bae6fd;
+    --color-primary-300: #7dd3fc;
+    --color-primary-400: #38bdf8;
+    --color-primary-500: #0ea5e9;
+    --color-primary-600: #0284c7;
+    --color-primary-700: #0369a1;
+    --color-primary-800: #075985;
+    --color-primary-900: #0c4a6e;
+    --color-primary-950: #082f49;
+
+    /* Dark palette */
+    --color-dark-bg: #0B0F19;
+    --color-dark-card: #111827;
+    --color-dark-border: #1F2937;
+    --color-dark-text: #F9FAFB;
+    --color-dark-muted: #9CA3AF;
+
+    /* Shadows */
+    --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 20px rgba(2, 132, 199, 0.15);
+}
+
+/* ── Base Layer ── */
+@layer base {
+    body {
+        @apply bg-dark-bg text-dark-text font-sans antialiased;
+
+        selection {
+            background: rgba(14, 165, 233, 0.3);
+        }
+    }
+}
+
+/* ── Component Layer ── */
+@layer components {
+
+    /* Glassmorphism card utility */
+    .glass-panel {
+        @apply bg-dark-card/60 backdrop-blur-md border border-dark-border/50 shadow-glass rounded-2xl;
+    }
+
+    .glass-panel-heavy {
+        @apply bg-dark-bg/80 backdrop-blur-lg border border-dark-border shadow-glow rounded-3xl;
+    }
+
+    /* Primary Button */
+    .btn-primary {
+        @apply inline-flex items-center justify-center px-4 py-2 bg-linear-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-primary-500/20 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center justify-center px-4 py-2 bg-dark-border/50 hover:bg-dark-border text-dark-text font-medium rounded-xl transition-all duration-200 border border-dark-border/50 active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:shadow-glow;
+    }
+
+    .btn-danger {
+        @apply inline-flex items-center justify-center px-4 py-2 bg-red-600/90 hover:bg-red-500 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-red-500/20 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+    }
+
+    /* Inputs */
+    .input-field {
+        @apply w-full px-4 py-3 bg-dark-bg/50 border border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all duration-200 text-dark-text placeholder-dark-muted;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-dark-bg;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-dark-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(2, 132, 199, 0.5);
+}
+
+/* Base animations */
+.animate-fade-in {
+    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-up {
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
