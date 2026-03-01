@@ -1,6 +1,6 @@
 # ROADMAP.md
 
-> **Current Phase**: Not started
+> **Current Phase**: 3 completed
 > **Milestone**: Next.js & Optimization Rewrite
 
 ## Must-Haves (from SPEC)
@@ -23,6 +23,10 @@
 **Status**: ✅ Complete
 **Objective**: Migrate remaining components (Dashboard, Student Views, Dispute Management) and strictly wire up all forms and flows to the refactored and reliable backend API.
 
-### Phase 4: QA & Final Performance Optimization
+### Phase 4: Docker Reintegration & File Cleanup
+**Status**: ⬜ Not Started
+**Objective**: Update Docker configuration for the new Next.js frontend, remove the old Vite frontend service, create a new `frontend-next/Dockerfile`, update `docker-compose.yml`, and purge orphan files from the repository root.
+
+### Phase 5: QA & Final Performance Optimization
 **Status**: ⬜ Not Started
 **Objective**: Conduct final end-to-end tests to verify robustness and apply Next.js and FastAPI optimization techniques (caching, faster loads, rate limit tuning).
