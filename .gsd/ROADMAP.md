@@ -1,6 +1,6 @@
 # ROADMAP.md
 
-> **Current Phase**: 3 completed
+> **Current Phase**: 4 completed
 > **Milestone**: Next.js & Optimization Rewrite
 
 ## Must-Haves (from SPEC)
@@ -27,6 +27,10 @@
 **Status**: ✅ Complete
 **Objective**: Update Docker configuration for the new Next.js frontend, remove the old Vite frontend service, create a new `frontend-next/Dockerfile`, update `docker-compose.yml`, and purge orphan files from the repository root.
 
-### Phase 5: QA & Final Performance Optimization
+### Phase 5: Accounts Revamp & CLI Management
+**Status**: ⬜ Not Started
+**Objective**: Create a CLI management tool for account operations (password reset, admin creation, role changes), auto-seed a default admin on first startup, and externalize SECRET_KEY. All features tested with Docker in mind.
+
+### Phase 6: QA & Final Performance Optimization
 **Status**: ⬜ Not Started
 **Objective**: Conduct final end-to-end tests to verify robustness and apply Next.js and FastAPI optimization techniques (caching, faster loads, rate limit tuning).
