@@ -9,6 +9,7 @@ from ..dependencies import (
     get_attendance_service,
 )
 from ..models import AttendanceSession, AttendanceRecord, User, UserRole, AttendanceSource
+from ..schemas import SessionReportResponse
 from ..attendance import AttendanceService
 
 router = APIRouter(tags=["sessions"])
@@ -54,7 +55,7 @@ def end_active_session(
     return result
 
 
-@router.get("/sessions/{session_id}/report")
+@router.get("/sessions/{session_id}/report", response_model=SessionReportResponse)
 def get_session_report(
     session_id: int,
     current_user: User = Depends(allow_teacher_admin),

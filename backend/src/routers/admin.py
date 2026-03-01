@@ -1,6 +1,5 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 from sqlmodel import Session, select
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -23,21 +22,22 @@ from ..models import (
     UnknownFace,
     AttendanceSource,
 )
-from ..schemas import MapUserRequest
+from ..schemas import (
+    MapUserRequest,
+    AssignClassRequest,
+    ClassCreate,
+    AssignClassResponse,
+    ClassCreateResponse,
+    MapIdentityResponse,
+    CleanupResponse,
+    TableDataResponse,
+)
 from ..admin_service import AdminService
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
-# --- Request Schemas ---
 
-class AssignClassRequest(BaseModel):
-    class_id: int
-
-
-class ClassCreate(BaseModel):
-    name: str
-    description: str = None
 
 
 # --- Endpoints ---
@@ -50,7 +50,7 @@ def get_all_users(
     return session.exec(select(User)).all()
 
 
-@router.put("/users/{user_id}/assign-class")
+@router.put("/users/{user_id}/assign-class", response_model=AssignClassResponse)
 def assign_user_to_class(
     user_id: int,
     request: AssignClassRequest,
@@ -68,7 +68,7 @@ def assign_user_to_class(
     user.class_id = request.class_id
     session.add(user)
     session.commit()
-    return {"status": "success", "user_id": user.id, "class_id": user.class_id}
+    return AssignClassResponse(status="success", user_id=user.id, class_id=user.class_id)
 
 
 @router.get("/users/students/unassigned", response_model=List[User])
@@ -81,7 +81,7 @@ def get_unassigned_students(
     ).all()
 
 
-@router.post("/classes")
+@router.post("/classes", response_model=ClassCreateResponse)
 def create_class(
     req: ClassCreate,
     current_user: User = Depends(allow_teacher_admin),
@@ -91,7 +91,7 @@ def create_class(
     session.add(new_class)
     session.commit()
     session.refresh(new_class)
-    return {"id": new_class.id, "name": new_class.name}
+    return ClassCreateResponse(id=new_class.id, name=new_class.name)
 
 
 @router.get("/classes")
@@ -102,7 +102,7 @@ def get_classes(
     return session.exec(select(ClassGroup)).all()
 
 
-@router.post("/map-identity")
+@router.post("/map-identity", response_model=MapIdentityResponse)
 def map_user_identity(
     request: MapUserRequest,
     current_user: User = Depends(allow_admin),
@@ -124,7 +124,7 @@ def map_user_identity(
         details={"face_identity": request.face_identity},
     )
 
-    return {"status": "success", "username": user.username, "face_identity": user.face_identity}
+    return MapIdentityResponse(status="success", username=user.username, face_identity=user.face_identity)
 
 
 @router.get("/audit-logs", response_model=List[AuditLog])
@@ -135,7 +135,7 @@ def get_audit_logs(
     return admin_svc.get_audit_logs()
 
 
-@router.post("/cleanup")
+@router.post("/cleanup", response_model=CleanupResponse)
 def cleanup_media(
     days: int = 30,
     current_user: User = Depends(allow_admin),
@@ -170,7 +170,7 @@ def cleanup_media(
         details={"days": days, "records_deleted": count, "files_deleted": deleted_files},
     )
 
-    return {"status": "success", "records_deleted": count, "files_deleted": deleted_files}
+    return CleanupResponse(status="success", records_deleted=count, files_deleted=deleted_files)
 
 
 @router.get("/database/tables")

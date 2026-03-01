@@ -14,6 +14,7 @@ from ..dependencies import (
     get_video_processor,
 )
 from ..models import User
+from ..schemas import RecognitionResponse, DetectFacesResponse, FaceResult, BoundingBox
 from ..attendance import AttendanceService
 from ..recognition import RecognitionService
 from ..video_processor import VideoProcessor
@@ -21,7 +22,7 @@ from ..video_processor import VideoProcessor
 router = APIRouter(tags=["recognition"])
 
 
-@router.post("/recognize/image")
+@router.post("/recognize/image", response_model=RecognitionResponse)
 async def recognize_image(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
@@ -77,7 +78,9 @@ async def recognize_image(
                         session_id, f"unknowns/{unknown_filename}", 1.0 - res["distance"]
                     )
 
-        return {"faces": results}
+        return RecognitionResponse(
+            faces=[FaceResult(**r) for r in results]
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -85,7 +88,7 @@ async def recognize_image(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/detect-faces")
+@router.post("/detect-faces", response_model=DetectFacesResponse)
 async def detect_faces_endpoint(
     file: UploadFile = File(...),
     current_user: User = Depends(allow_teacher_admin),
@@ -97,7 +100,9 @@ async def detect_faces_endpoint(
     rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     locations = rec_svc.detect_only(rgb_img)
-    return {"faces": [{"bounding_box": loc} for loc in locations]}
+    return DetectFacesResponse(
+        faces=[BoundingBox(bounding_box=list(loc)) for loc in locations]
+    )
 
 
 @router.post("/recognize/video")
