@@ -25,6 +25,9 @@ async def lifespan(app: FastAPI):
     # --- Startup ---
     create_db_and_tables()
 
+    # Auto-seed default admin if none exists
+    _seed_default_admin()
+
     # Initialize ML services and attach to app.state
     app.state.embedding_loader = EmbeddingLoader()
     app.state.recognition_service = RecognitionService(app.state.embedding_loader)
@@ -38,6 +41,32 @@ async def lifespan(app: FastAPI):
     yield
 
     # --- Shutdown (cleanup if needed) ---
+
+
+def _seed_default_admin():
+    """Create a default admin user if no admin exists in the database."""
+    from sqlmodel import Session, select
+    from .models import User, UserRole
+    from .auth_service import get_password_hash
+
+    with Session(engine) as session:
+        existing_admin = session.exec(
+            select(User).where(User.role == UserRole.ADMIN)
+        ).first()
+
+        if existing_admin:
+            return  # An admin already exists, skip seeding
+
+        default_password = os.getenv("ADMIN_DEFAULT_PASSWORD", "robocop")
+        admin_user = User(
+            username="admin",
+            password_hash=get_password_hash(default_password),
+            role=UserRole.ADMIN,
+            full_name="System Administrator",
+        )
+        session.add(admin_user)
+        session.commit()
+        print(f"[STARTUP] Default admin created → username: admin / password: {default_password}")
 
 
 app = FastAPI(title="Robocop Attendance System", version="2.0", lifespan=lifespan)

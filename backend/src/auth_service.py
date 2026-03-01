@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional, List
 from jose import jwt, JWTError
@@ -9,7 +10,7 @@ from .database import engine
 from .models import User, UserRole
 
 # Secret key for JWT signing. In production, this should be an env var.
-SECRET_KEY = "robocop_secret_key_change_me"
+SECRET_KEY = os.getenv("SECRET_KEY", "robocop_secret_key_change_me")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 480 # 8 hours
 
@@ -57,9 +58,7 @@ class RoleChecker:
         self.allowed_roles = allowed_roles
 
     def __call__(self, user: User = Depends(get_current_user)):
-        print(f"DEBUG: Checking Role. User: {user.username}, Role: {user.role}, Allowed: {[r.value for r in self.allowed_roles]}")
         if user.role not in self.allowed_roles:
-            print(f"DEBUG: Access Denied for {user.username}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, 
                 detail=f"Operation not permitted. Required roles: {[r.value for r in self.allowed_roles]}"

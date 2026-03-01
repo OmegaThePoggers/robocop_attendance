@@ -28,7 +28,7 @@
 **Objective**: Update Docker configuration for the new Next.js frontend, remove the old Vite frontend service, create a new `frontend-next/Dockerfile`, update `docker-compose.yml`, and purge orphan files from the repository root.
 
 ### Phase 5: Accounts Revamp & CLI Management
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
 **Objective**: Create a CLI management tool for account operations (password reset, admin creation, role changes), auto-seed a default admin on first startup, and externalize SECRET_KEY. All features tested with Docker in mind.
 
 ### Phase 6: QA & Final Performance Optimization
