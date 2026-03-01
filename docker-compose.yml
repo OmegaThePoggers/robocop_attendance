@@ -40,20 +40,17 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./frontend-next
     container_name: robocop_frontend
     ports:
-      - "5173:5173"
+      - "3000:3000"
     volumes:
       # Mount source code for hot-reloading
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-      - ./frontend/tailwind.config.js:/app/tailwind.config.js
-      - ./frontend/vite.config.js:/app/vite.config.js
+      - ./frontend-next/src:/app/src
+      - ./frontend-next/public:/app/public
     environment:
-      # Vite looks for this to hit our local FastAPI container
-      - VITE_API_URL=http://localhost:8000
-      - CHOKIDAR_USEPOLLING=true # Helps with hot reload on some Windows host mounts
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - WATCHPACK_POLLING=true
     restart: unless-stopped
     depends_on:
       - backend
