@@ -44,4 +44,4 @@ ENV PYTHONUNBUFFERED=1
 ENV TZ=UTC
 
 # Run the application
-CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

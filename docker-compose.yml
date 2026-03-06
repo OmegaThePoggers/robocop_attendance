@@ -24,6 +24,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      # Mount source code for hot-reloading in development
+      - ./backend/src:/app/src
       # Mount dataset for facial recognition images
       - ./dataset:/app/dataset
       # Mount static files to serve evidence/crops
