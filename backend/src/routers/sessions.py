@@ -20,6 +20,9 @@ def get_sessions(
     current_user: User = Depends(get_current_user),
     svc: AttendanceService = Depends(get_attendance_service),
 ):
+    # Students only see sessions for their assigned class
+    if current_user.role == UserRole.STUDENT and current_user.class_id:
+        return svc.get_session_history(class_id=current_user.class_id)
     return svc.get_session_history()
 
 
@@ -81,7 +84,7 @@ def get_active_session_unknowns(
 @router.get("/sessions/{session_id}/evidence")
 def get_session_evidence(
     session_id: int,
-    current_user: User = Depends(allow_teacher_admin),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     return session.exec(

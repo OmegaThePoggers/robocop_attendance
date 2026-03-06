@@ -52,7 +52,7 @@ def get_my_attendance(
     aliases = []
     if current_user.face_identity:
         aliases.append(current_user.face_identity)
-    return svc.get_student_history(current_user.username, aliases)
+    return svc.get_student_history(current_user.username, aliases, class_id=current_user.class_id)
 
 
 @router.get("/attendance/absent", response_model=List[str])

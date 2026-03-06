@@ -51,9 +51,16 @@ class AttendanceService:
         with Session(engine) as session:
              return session.exec(select(AttendanceSession).where(AttendanceSession.is_active == True)).first()
 
-    def get_session_history(self) -> List[AttendanceSession]:
+    def get_session_history(self, class_id: Optional[int] = None) -> List[AttendanceSession]:
         with Session(engine) as session:
-            return session.exec(select(AttendanceSession).where(AttendanceSession.is_active == False).order_by(AttendanceSession.created_at.desc())).all()
+            query = select(AttendanceSession).where(
+                AttendanceSession.is_active == False
+            )
+            if class_id is not None:
+                query = query.where(AttendanceSession.class_id == class_id)
+            return session.exec(
+                query.order_by(AttendanceSession.created_at.desc())
+            ).all()
 
     def mark_attendance(
         self, 
@@ -204,13 +211,24 @@ class AttendanceService:
             session.refresh(record)
             return record
 
-    def get_student_history(self, student_name: str, aliases: Optional[List[str]] = None) -> List[AttendanceRecord]:
+    def get_student_history(self, student_name: str, aliases: Optional[List[str]] = None, class_id: Optional[int] = None) -> List[AttendanceRecord]:
         with Session(engine) as session:
             # Check for records matching username OR face identity alias
             names_to_check = [student_name]
             if aliases:
                 names_to_check.extend(aliases)
             
-            return session.exec(select(AttendanceRecord).where(
+            query = select(AttendanceRecord).where(
                 AttendanceRecord.student_name.in_(names_to_check)
-            ).order_by(AttendanceRecord.timestamp.desc())).all()
+            )
+
+            # Scope to sessions belonging to the student's class
+            if class_id is not None:
+                query = query.join(
+                    AttendanceSession,
+                    AttendanceRecord.session_id == AttendanceSession.id
+                ).where(AttendanceSession.class_id == class_id)
+
+            return session.exec(
+                query.order_by(AttendanceRecord.timestamp.desc())
+            ).all()

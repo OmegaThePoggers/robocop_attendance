@@ -36,5 +36,5 @@
 **Objective**: Conduct final end-to-end tests to verify robustness and apply Next.js and FastAPI optimization techniques (caching, faster loads, rate limit tuning).
 
 ### Phase 7: Fix Dispute Evidence & Attendance Scoping
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
 **Objective**: Fix session photos not showing in dispute filing (evidence endpoint permissions), and scope attendance logs and session history to the student's assigned class.
