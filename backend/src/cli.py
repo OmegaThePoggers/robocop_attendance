@@ -6,12 +6,14 @@ Usage (local):
     python -m src.cli create-admin admin robocop --full-name "Admin User"
     python -m src.cli list-users --role admin
     python -m src.cli set-role someuser teacher
+    python -m src.cli seed-db
 
 Usage (Docker):
     docker exec -it robocop_backend python -m src.cli reset-password admin newpass123
     docker exec -it robocop_backend python -m src.cli create-admin admin robocop
     docker exec -it robocop_backend python -m src.cli list-users
     docker exec -it robocop_backend python -m src.cli set-role someuser admin
+    docker exec -it robocop_backend python -m src.cli seed-db
 """
 
 import argparse
@@ -20,7 +22,7 @@ import sys
 from sqlmodel import Session, select
 
 from .database import engine, create_db_and_tables
-from .models import User, UserRole
+from .models import User, UserRole, ClassGroup
 from .auth_service import get_password_hash
 
 
@@ -110,6 +112,68 @@ def set_role(args):
         print(f"✓ '{args.username}' role changed: {old_role} → {new_role}")
 
 
+def seed_db(args):
+    """Seed the database with essential data for a working system."""
+    create_db_and_tables()
+    print("\n🌱 Seeding database...\n")
+
+    with Session(engine) as session:
+        created = []
+
+        # 1. Admin user
+        if not session.exec(select(User).where(User.username == "admin")).first():
+            session.add(User(
+                username="admin",
+                password_hash=get_password_hash("robocop"),
+                role=UserRole.ADMIN,
+                full_name="System Administrator",
+            ))
+            created.append("  ✓ Admin user: admin / robocop")
+        else:
+            created.append("  ⊘ Admin user already exists")
+
+        # 2. Demo teacher
+        if not session.exec(select(User).where(User.username == "teacher1")).first():
+            session.add(User(
+                username="teacher1",
+                password_hash=get_password_hash("teacher123"),
+                role=UserRole.TEACHER,
+                full_name="Demo Teacher",
+            ))
+            created.append("  ✓ Teacher user: teacher1 / teacher123")
+        else:
+            created.append("  ⊘ Teacher user already exists")
+
+        # 3. Demo classes
+        classes_data = [
+            ("CS-101", "Introduction to Computer Science"),
+            ("CS-201", "Data Structures & Algorithms"),
+            ("CS-301", "Machine Learning Fundamentals"),
+        ]
+        for name, desc in classes_data:
+            if not session.exec(select(ClassGroup).where(ClassGroup.name == name)).first():
+                session.add(ClassGroup(name=name, description=desc))
+                created.append(f"  ✓ Class: {name}")
+            else:
+                created.append(f"  ⊘ Class '{name}' already exists")
+
+        session.commit()
+
+        # Print summary
+        for line in created:
+            print(line)
+
+        # Show credentials table
+        print("\n" + "─" * 50)
+        print("📋 Credentials:")
+        print(f"  {'Role':<10} {'Username':<15} {'Password':<15}")
+        print(f"  {'─'*10} {'─'*15} {'─'*15}")
+        print(f"  {'admin':<10} {'admin':<15} {'robocop':<15}")
+        print(f"  {'teacher':<10} {'teacher1':<15} {'teacher123':<15}")
+        print("─" * 50)
+        print("\n✓ Database seeded successfully!\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="robocop-cli",
@@ -140,6 +204,10 @@ def main():
     sr.add_argument("username", help="Username of the account")
     sr.add_argument("role", help="New role (admin, teacher, student, kiosk)")
     sr.set_defaults(func=set_role)
+
+    # seed-db
+    sd = subparsers.add_parser("seed-db", help="Seed the database with essential data")
+    sd.set_defaults(func=seed_db)
 
     args = parser.parse_args()
     args.func(args)
