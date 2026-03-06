@@ -1,7 +1,10 @@
 import './globals.css';
 
 export const metadata = {
-    title: 'SmartAttend 2.0 — Attendance System',
+    title: {
+        default: 'SmartAttend 2.0 — Attendance System',
+        template: '%s | SmartAttend 2.0',
+    },
     description: 'Face recognition-based attendance tracking system',
 };
 

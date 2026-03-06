@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from starlette.middleware.gzip import GZipMiddleware
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 import os
 
@@ -17,6 +17,7 @@ from .admin_service import AdminService
 
 # Routers
 from .routers import auth, sessions, attendance, admin, disputes, unknowns, recognition
+from .dependencies import limiter
 
 
 @asynccontextmanager
@@ -73,14 +74,17 @@ def _seed_default_admin():
 app = FastAPI(title="Robocop Attendance System", version="2.0", lifespan=lifespan)
 
 # Rate Limiter Setup
-limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Enable CORS
+# GZip Compression
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
+# Enable CORS — configurable via CORS_ORIGINS env var
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

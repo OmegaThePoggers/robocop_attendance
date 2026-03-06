@@ -19,6 +19,12 @@ from .embedding_loader import EmbeddingLoader
 from .recognition import RecognitionService
 from .video_processor import VideoProcessor
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+# Shared rate limiter instance — used by main.py and routers
+limiter = Limiter(key_func=get_remote_address)
+
 
 # ---------- Database Session ----------
 

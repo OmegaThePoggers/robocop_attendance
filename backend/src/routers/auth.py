@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 from datetime import timedelta
 
-from ..dependencies import get_session, get_embedding_loader
+from ..dependencies import get_session, get_embedding_loader, limiter
 from ..models import User, UserCreate, UserRole, Token
 from ..embedding_loader import EmbeddingLoader
 from ..auth_service import (
@@ -20,7 +20,9 @@ router = APIRouter(tags=["auth"])
 
 
 @router.post("/token", response_model=Token)
+@limiter.limit("5/minute")
 async def login_for_access_token(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(get_session),
 ):
@@ -41,7 +43,9 @@ async def login_for_access_token(
 
 
 @router.post("/register", response_model=User)
+@limiter.limit("3/minute")
 async def register_user(
+    request: Request,
     username: str = Form(...),
     password: str = Form(...),
     full_name: str = Form(None),
@@ -90,7 +94,9 @@ async def register_user(
 
 
 @router.post("/register-teacher", response_model=User)
+@limiter.limit("3/minute")
 async def register_teacher(
+    request: Request,
     user_in: UserCreate,
     session: Session = Depends(get_session),
 ):
