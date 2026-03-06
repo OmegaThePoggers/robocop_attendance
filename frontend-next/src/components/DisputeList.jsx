@@ -70,9 +70,10 @@ export default function DisputeList() {
                             )}
                             <div className="flex justify-between items-start mb-2">
                                 <span className="text-sm font-bold text-white group-hover:text-secondary-300 transition-colors">{d.student_username}</span>
-                                <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shadow-sm ${d.status === 'pending'
-                                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                                    : 'bg-dark-bg text-dark-muted border border-dark-border/50'
+                                <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shadow-sm ${d.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' :
+                                        d.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(52,211,153,0.2)]' :
+                                            d.status === 'rejected' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' :
+                                                'bg-dark-bg text-dark-muted border border-dark-border/50'
                                     }`}>
                                     {d.status}
                                 </span>
