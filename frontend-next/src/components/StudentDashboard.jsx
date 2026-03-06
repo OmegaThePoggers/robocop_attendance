@@ -103,7 +103,15 @@ export default function StudentDashboard() {
         }
 
         const dispute = myDisputes.find(d => d.session_id === sessionId);
-        if (dispute) return { status: `Review (${dispute.status})`, color: 'text-amber-400 bg-amber-400/10 border-amber-500/20 shadow-[0_0_10px_rgba(251,191,36,0.2)]', icon: '◷', metadata: null };
+        if (dispute) {
+            if (dispute.status === 'approved') {
+                return { status: 'Approved', color: 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20 shadow-[0_0_10px_rgba(52,211,153,0.2)]', icon: '✓', metadata: null };
+            }
+            if (dispute.status === 'rejected') {
+                return { status: 'Rejected', color: 'text-rose-400 bg-rose-400/10 border-rose-500/20 shadow-[0_0_10px_rgba(244,63,94,0.2)]', icon: '✕', metadata: null };
+            }
+            return { status: 'Reviewing', color: 'text-amber-400 bg-amber-400/10 border-amber-500/20 shadow-[0_0_10px_rgba(251,191,36,0.2)]', icon: '◷', metadata: null };
+        }
 
         return { status: 'Absent', color: 'text-rose-400 bg-rose-400/10 border-rose-500/20 shadow-[0_0_10px_rgba(244,63,94,0.2)]', icon: '✕', metadata: null };
     }
