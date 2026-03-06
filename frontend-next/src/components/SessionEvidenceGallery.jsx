@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSessionEvidence, STATIC_URL } from '../lib/api';
 
 export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) {
     const [evidence, setEvidence] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
+    const imgRef = useRef(null);
 
     useEffect(() => {
         if (!sessionId) return;
@@ -28,42 +29,52 @@ export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) 
     const [dragEnd, setDragEnd] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
 
-    const handleMouseDown = (e) => {
-        const rect = e.target.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        setDragStart({ x, y });
-        setDragEnd({ x, y });
+    // Use the img ref consistently instead of e.target (which can shift to overlay elements)
+    const getRelativeCoords = useCallback((e) => {
+        const img = imgRef.current;
+        if (!img) return null;
+        const rect = img.getBoundingClientRect();
+        return {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+        };
+    }, []);
+
+    const handleMouseDown = useCallback((e) => {
+        e.preventDefault();
+        const pos = getRelativeCoords(e);
+        if (!pos) return;
+        setDragStart(pos);
+        setDragEnd(pos);
         setIsDragging(true);
-    };
+    }, [getRelativeCoords]);
 
-    const handleMouseMove = (e) => {
+    const handleMouseMove = useCallback((e) => {
         if (!isDragging) return;
-        const rect = e.target.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        setDragEnd({ x, y });
-    };
+        const pos = getRelativeCoords(e);
+        if (!pos) return;
+        setDragEnd(pos);
+    }, [isDragging, getRelativeCoords]);
 
-    const handleMouseUp = (e) => {
+    const handleMouseUp = useCallback((e) => {
         if (!isDragging) return;
         setIsDragging(false);
 
-        const rect = e.target.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        setDragEnd({ x, y });
+        const img = imgRef.current;
+        if (!img || !dragStart) return;
 
-        if (!dragStart) return;
+        const pos = getRelativeCoords(e);
+        if (!pos) return;
 
-        // Calculate original image coordinates
-        const scaleX = e.target.naturalWidth / rect.width;
-        const scaleY = e.target.naturalHeight / rect.height;
+        // Calculate original image coordinates using the img element's natural size
+        const rect = img.getBoundingClientRect();
+        const scaleX = img.naturalWidth / rect.width;
+        const scaleY = img.naturalHeight / rect.height;
 
         const startX = dragStart.x * scaleX;
         const startY = dragStart.y * scaleY;
-        const endX = x * scaleX;
-        const endY = y * scaleY;
+        const endX = pos.x * scaleX;
+        const endY = pos.y * scaleY;
 
         const x1 = Math.round(Math.min(startX, endX));
         const y1 = Math.round(Math.min(startY, endY));
@@ -73,11 +84,11 @@ export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) 
         // Format: [top, right, bottom, left]
         if (x2 - x1 > 10 && y2 - y1 > 10) {
             onSelectEvidence(selectedImage.id, [y1, x2, y2, x1], `${STATIC_URL}/${selectedImage.file_path}`);
-        } else {
-            setDragStart(null);
-            setDragEnd(null);
         }
-    };
+
+        setDragStart(null);
+        setDragEnd(null);
+    }, [isDragging, dragStart, getRelativeCoords, selectedImage, onSelectEvidence]);
 
     if (loading) return (
         <div className="flex flex-col justify-center items-center h-48 border border-dashed border-dark-border bg-dark-bg/50 rounded-xl">
@@ -106,7 +117,7 @@ export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) 
                         <span className="text-xs text-dark-muted font-mono hidden sm:inline-block border-l border-dark-border/50 pl-2">IMG_{selectedImage.id.toString().padStart(4, '0')}</span>
                     </div>
                     <button
-                        onClick={() => setSelectedImage(null)}
+                        onClick={() => { setSelectedImage(null); setDragStart(null); setDragEnd(null); }}
                         className="text-xs text-dark-muted hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-md flex items-center gap-1.5"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
@@ -114,13 +125,18 @@ export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) 
                     </button>
                 </div>
 
-                <div className="relative rounded-xl border border-primary-500/30 group cursor-crosshair overflow-hidden bg-black/80 flex justify-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+                {/* Use a wrapper div for mouse events so they don't get lost on the overlay */}
+                <div
+                    className="relative rounded-xl border border-primary-500/30 group cursor-crosshair overflow-hidden bg-black/80 flex justify-center shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={() => { if (isDragging) { setIsDragging(false); setDragStart(null); setDragEnd(null); } }}
+                >
                     <img
+                        ref={imgRef}
                         src={`${STATIC_URL}/${selectedImage.file_path}`}
-                        className="max-w-full max-h-[50vh] object-contain select-none"
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
+                        className="max-w-full max-h-[50vh] object-contain select-none pointer-events-none"
                         draggable="false"
                         alt="Evidence"
                     />
@@ -139,7 +155,7 @@ export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) 
 
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-md text-white border border-white/20 text-xs px-4 py-2 rounded-full uppercase tracking-wider font-semibold pointer-events-none z-20 shadow-lg flex items-center gap-2">
                         <svg className="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
-                        Click & Drag over your face
+                        Click &amp; Drag over your face
                     </div>
                 </div>
             </div>
