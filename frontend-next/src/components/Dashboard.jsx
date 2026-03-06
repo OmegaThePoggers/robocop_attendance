@@ -256,7 +256,7 @@ export default function Dashboard() {
                                 <div className="h-full flex flex-col gap-4 p-4 animate-fade-in">
                                     <LiveCorrectionPanel />
                                     <div className="flex-grow bg-dark-bg/30 border border-dark-border/30 rounded-xl overflow-hidden">
-                                        <AttendanceTable />
+                                        <AttendanceTable activeSession={activeSession} />
                                     </div>
                                 </div>
                             )}
@@ -273,14 +273,18 @@ export default function Dashboard() {
                                 </div>
                             )}
 
-                            {/* Empty State Fallback */}
+                            {/* Empty State Fallback - Now shows universal logs */}
                             {!activeSession && activeTab !== 'history' && (
-                                <div className="h-full flex flex-col items-center justify-center text-dark-muted p-8 text-center animate-fade-in">
-                                    <div className="w-20 h-20 rounded-full bg-dark-bg/50 border border-dark-border/50 flex items-center justify-center mb-4">
-                                        <svg className="w-10 h-10 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                <div className="h-full flex flex-col pt-4 px-4 pb-4 animate-fade-in">
+                                    <div className="mb-4 p-4 bg-primary-900/10 border border-primary-500/20 rounded-xl flex items-center justify-between text-sm text-primary-100 shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <svg className="w-5 h-5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            <p>No active class session. Showing universal attendance logs. Select a class and start a session to capture live attendance.</p>
+                                        </div>
                                     </div>
-                                    <h3 className="text-lg font-bold text-white mb-2 tracking-wide">Ready for Session</h3>
-                                    <p className="max-w-md text-sm">Select a class and enter a session name above to begin capturing attendance, or navigate to Archives to view past data.</p>
+                                    <div className="flex-grow bg-dark-bg/30 border border-dark-border/30 rounded-xl overflow-hidden shadow-lg h-[400px]">
+                                        <AttendanceTable activeSession={null} />
+                                    </div>
                                 </div>
                             )}
                         </div>

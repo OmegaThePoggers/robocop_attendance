@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getAttendance } from '../lib/api';
 
-export default function AttendanceTable() {
+export default function AttendanceTable({ activeSession }) {
     const [logs, setLogs] = useState([]);
 
     useEffect(() => {
@@ -18,6 +18,11 @@ export default function AttendanceTable() {
         return () => clearInterval(interval);
     }, []);
 
+    // Filter logs by active session if one exists
+    const displayLogs = activeSession
+        ? logs.filter(log => log.session_id === activeSession.id)
+        : logs;
+
     return (
         <div className="bg-dark-bg/40 border-none rounded-xl overflow-hidden flex flex-col h-full">
             <div className="bg-dark-bg/80 px-5 py-4 border-b border-dark-border/50 flex justify-between items-center backdrop-blur-md sticky top-0 z-20">
@@ -25,9 +30,11 @@ export default function AttendanceTable() {
                     <div className="p-1.5 bg-primary-500/20 rounded-lg shrink-0">
                         <svg className="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                     </div>
-                    <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">Attendance Log</h2>
+                    <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">
+                        {activeSession ? 'Session Check-ins' : 'Attendance Log'}
+                    </h2>
                     <span className="text-[10px] font-bold bg-primary-500 text-white px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]">
-                        {logs.length}
+                        {displayLogs.length}
                     </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-dark-muted font-medium bg-dark-bg px-3 py-1.5 rounded-full border border-dark-border/50">
@@ -50,7 +57,7 @@ export default function AttendanceTable() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-dark-border/30">
-                        {logs.map((log) => (
+                        {displayLogs.map((log) => (
                             <tr key={log.id} className="hover:bg-primary-500/5 transition-colors group">
                                 <td className="py-3 pl-6 text-dark-muted text-xs font-mono group-hover:text-primary-300 transition-colors">#{String(log.id).padStart(5, '0')}</td>
                                 <td className="py-3 text-slate-200 text-sm font-medium">
@@ -67,7 +74,7 @@ export default function AttendanceTable() {
                                 </td>
                             </tr>
                         ))}
-                        {logs.length === 0 && (
+                        {displayLogs.length === 0 && (
                             <tr>
                                 <td colSpan="4">
                                     <div className="flex flex-col items-center justify-center py-12 text-dark-muted">
