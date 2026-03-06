@@ -219,7 +219,7 @@ export default function DisputeList() {
                                                 Reject Appeal
                                             </button>
                                             <button
-                                                onClick={() => handleResolve(viewingEvidence.id, 'accepted')}
+                                                onClick={() => handleResolve(viewingEvidence.id, 'approved')}
                                                 className="px-6 py-2.5 bg-success/80 hover:bg-success text-white text-xs font-bold uppercase tracking-widest rounded transition-all shadow-[0_0_15px_rgba(34,197,94,0.2)] hover:shadow-[0_0_20px_rgba(34,197,94,0.4)] flex items-center justify-center gap-2 group w-full sm:w-auto"
                                             >
                                                 <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
