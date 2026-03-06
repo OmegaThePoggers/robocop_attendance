@@ -28,12 +28,13 @@ export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) 
     const [dragStart, setDragStart] = useState(null);
     const [dragEnd, setDragEnd] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
+    const containerRef = useRef(null);
 
-    // Use the img ref consistently instead of e.target (which can shift to overlay elements)
+    // Get coordinates relative to the container div
     const getRelativeCoords = useCallback((e) => {
-        const img = imgRef.current;
-        if (!img) return null;
-        const rect = img.getBoundingClientRect();
+        const container = containerRef.current;
+        if (!container) return null;
+        const rect = container.getBoundingClientRect();
         return {
             x: e.clientX - rect.left,
             y: e.clientY - rect.top,
@@ -61,20 +62,29 @@ export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) 
         setIsDragging(false);
 
         const img = imgRef.current;
-        if (!img || !dragStart) return;
+        const container = containerRef.current;
+        if (!img || !container || !dragStart) return;
 
         const pos = getRelativeCoords(e);
         if (!pos) return;
 
-        // Calculate original image coordinates using the img element's natural size
-        const rect = img.getBoundingClientRect();
-        const scaleX = img.naturalWidth / rect.width;
-        const scaleY = img.naturalHeight / rect.height;
+        // Calculate the image's actual rendered position within the container
+        const containerRect = container.getBoundingClientRect();
+        const imgRect = img.getBoundingClientRect();
 
-        const startX = dragStart.x * scaleX;
-        const startY = dragStart.y * scaleY;
-        const endX = pos.x * scaleX;
-        const endY = pos.y * scaleY;
+        // Offset of the image within the container (from flex justify-center)
+        const imgOffsetX = imgRect.left - containerRect.left;
+        const imgOffsetY = imgRect.top - containerRect.top;
+
+        // Scale from rendered image size to natural image size
+        const scaleX = img.naturalWidth / imgRect.width;
+        const scaleY = img.naturalHeight / imgRect.height;
+
+        // Translate container coords to image coords
+        const startX = (dragStart.x - imgOffsetX) * scaleX;
+        const startY = (dragStart.y - imgOffsetY) * scaleY;
+        const endX = (pos.x - imgOffsetX) * scaleX;
+        const endY = (pos.y - imgOffsetY) * scaleY;
 
         const x1 = Math.round(Math.min(startX, endX));
         const y1 = Math.round(Math.min(startY, endY));
@@ -127,6 +137,7 @@ export default function SessionEvidenceGallery({ sessionId, onSelectEvidence }) 
 
                 {/* Use a wrapper div for mouse events so they don't get lost on the overlay */}
                 <div
+                    ref={containerRef}
                     className="relative rounded-xl border border-primary-500/30 group cursor-crosshair overflow-hidden bg-black/80 flex justify-center shadow-[0_0_30px_rgba(0,0,0,0.5)]"
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}

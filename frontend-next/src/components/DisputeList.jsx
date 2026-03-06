@@ -69,7 +69,7 @@ export default function DisputeList() {
                                 <div className="absolute left-0 top-0 w-1 h-full bg-secondary-500"></div>
                             )}
                             <div className="flex justify-between items-start mb-2">
-                                <span className="text-sm font-bold text-white group-hover:text-secondary-300 transition-colors">{d.student_name}</span>
+                                <span className="text-sm font-bold text-white group-hover:text-secondary-300 transition-colors">{d.student_username}</span>
                                 <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shadow-sm ${d.status === 'pending'
                                     ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                                     : 'bg-dark-bg text-dark-muted border border-dark-border/50'
@@ -81,7 +81,7 @@ export default function DisputeList() {
                                 <svg className="w-3 h-3 text-dark-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                 <div className="text-[10px] text-slate-400 font-mono bg-dark-bg px-2 py-0.5 rounded border border-dark-border/50 w-fit">{d.session_name}</div>
                             </div>
-                            <div className="text-xs text-slate-300 line-clamp-2 italic opacity-80 pl-2 border-l-2 border-dark-border/50 mt-1">"{d.reason}"</div>
+                            <div className="text-xs text-slate-300 line-clamp-2 italic opacity-80 pl-2 border-l-2 border-dark-border/50 mt-1">"{d.description}"</div>
                         </div>
                     ))}
                 </div>
@@ -108,10 +108,10 @@ export default function DisputeList() {
 
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-xl bg-dark-bg border border-dark-border/80 flex items-center justify-center text-xl font-bold text-secondary-400 shadow-[0_0_15px_rgba(168,85,247,0.15)] shrink-0">
-                                    {viewingEvidence.student_name[0].toUpperCase()}
+                                    {viewingEvidence.student_username[0].toUpperCase()}
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-white tracking-wide">{viewingEvidence.student_name}</h3>
+                                    <h3 className="text-xl font-bold text-white tracking-wide">{viewingEvidence.student_username}</h3>
                                     <p className="text-xs font-mono text-secondary-400/80 uppercase tracking-widest mt-0.5 flex items-center gap-1.5">
                                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
                                         Ref: {viewingEvidence.session_name}
@@ -189,7 +189,7 @@ export default function DisputeList() {
                                         <div className="bg-dark-bg border border-dark-border/50 p-6 rounded-lg text-sm text-slate-200 font-mono text-center w-full relative">
                                             <svg className="w-6 h-6 text-primary-500/20 absolute top-2 left-2" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" /></svg>
                                             <svg className="w-6 h-6 text-primary-500/20 absolute bottom-2 right-2 rotate-180" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" /></svg>
-                                            <span className="relative z-10">{viewingEvidence.reason || "No statement provided."}</span>
+                                            <span className="relative z-10">{viewingEvidence.description || "No statement provided."}</span>
                                         </div>
                                     </div>
 
