@@ -36,3 +36,5 @@ dist/
 # Dataset (optional: if you want to keep images local only)
 # backend/dataset/
 
+# Uploaded evidence and session images
+backend/static/
