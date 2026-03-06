@@ -141,8 +141,9 @@ export default function DisputeList() {
                                             <div className="relative w-full h-full flex items-center justify-center p-2">
                                                 <div className="relative inline-block max-w-full max-h-full">
                                                     <img
+                                                        id="admin-evidence-img"
                                                         src={`${STATIC_URL}/${viewingEvidence.evidence_path}`}
-                                                        className="max-w-full max-h-full object-contain rounded border border-dark-border/50 shadow-2xl"
+                                                        className="max-w-full max-h-[350px] object-contain rounded border border-dark-border/50 shadow-2xl"
                                                         alt="Evidence"
                                                     />
                                                     {/* Overlay box if coords exist */}
@@ -152,14 +153,25 @@ export default function DisputeList() {
                                                             const clean = raw.replace(/[\[\]]/g, '').split(',').map(Number);
                                                             if (clean.length === 4) {
                                                                 const [y1, x2, y2, x1] = clean;
+
+                                                                // The coords in DB are absolute based on the NATURAL image size.
+                                                                // To render them correctly on learning image, we use percentages relative to natural size.
+                                                                const imgEl = document.getElementById('admin-evidence-img');
+                                                                if (!imgEl || !imgEl.naturalWidth) return null; // Wait for load
+
+                                                                const pX1 = (x1 / imgEl.naturalWidth) * 100;
+                                                                const pY1 = (y1 / imgEl.naturalHeight) * 100;
+                                                                const pW = ((x2 - x1) / imgEl.naturalWidth) * 100;
+                                                                const pH = ((y2 - y1) / imgEl.naturalHeight) * 100;
+
                                                                 return (
                                                                     <div
                                                                         className="absolute border-2 border-secondary-500 box-content shadow-[0_0_15px_rgba(168,85,247,0.6)] bg-secondary-500/10 cursor-pointer group/box"
                                                                         style={{
-                                                                            top: y1,
-                                                                            left: x1,
-                                                                            width: x2 - x1,
-                                                                            height: y2 - y1
+                                                                            top: `${pY1}%`,
+                                                                            left: `${pX1}%`,
+                                                                            width: `${pW}%`,
+                                                                            height: `${pH}%`
                                                                         }}
                                                                     >
                                                                         <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-secondary-500 text-white text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-widest whitespace-nowrap opacity-0 group-hover/box:opacity-100 transition-opacity">Claimed Face</div>
