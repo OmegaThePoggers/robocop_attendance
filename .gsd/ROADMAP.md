@@ -1,6 +1,6 @@
 # ROADMAP.md
 
-> **Current Phase**: All phases complete ✅
+> **Current Phase**: Phase 8: Migrate to Advanced Face Recognition Backend
 > **Milestone**: Next.js & Optimization Rewrite
 
 ## Must-Haves (from SPEC)
@@ -38,3 +38,7 @@
 ### Phase 7: Fix Dispute Evidence & Attendance Scoping
 **Status**: ✅ Complete
 **Objective**: Fix session photos not showing in dispute filing (evidence endpoint permissions), and scope attendance logs and session history to the student's assigned class.
+
+### Phase 8: Migrate to Advanced Face Recognition Backend
+**Status**: ⏳ Pending
+**Objective**: Migrate the backend to use SCRFD, ArcFace, PGVector, and FAISS for significantly improved face recognition accuracy and speed.
