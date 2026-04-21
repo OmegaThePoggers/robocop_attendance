@@ -71,7 +71,7 @@ If code execution sandbox is available:
 ## Integration with .gemini/
 
 The `.gemini/GEMINI.md` file can reference this adapter:
-
+    
 ```markdown
 # In .gemini/GEMINI.md
 

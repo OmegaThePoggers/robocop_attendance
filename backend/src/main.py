@@ -17,7 +17,10 @@ from .dispute_service import DisputeService
 from .admin_service import AdminService
 
 # Routers
-from .routers import auth, sessions, attendance, admin, disputes, unknowns, recognition
+from .routers import (
+    auth, sessions, attendance, admin, disputes, unknowns, recognition,
+    doubts, assignments, marks, notifications, library, schedule, chat
+)
 from .dependencies import limiter
 
 
@@ -78,7 +81,7 @@ def _seed_default_admin():
         print(f"[STARTUP] Default admin created → username: admin / password: {default_password}")
 
 
-app = FastAPI(title="Robocop Attendance System", version="2.0", lifespan=lifespan)
+app = FastAPI(title="SmartAttend + Cogni", version="3.0", lifespan=lifespan)
 
 # Rate Limiter Setup
 app.state.limiter = limiter
@@ -112,7 +115,16 @@ app.include_router(disputes.router)
 app.include_router(recognition.router)
 app.include_router(unknowns.router)
 
+# Cogni Routers
+app.include_router(doubts.router)
+app.include_router(assignments.router)
+app.include_router(marks.router)
+app.include_router(notifications.router)
+app.include_router(library.router)
+app.include_router(schedule.router)
+app.include_router(chat.router)
+
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "platform": "SmartAttend + Cogni v3.0"}

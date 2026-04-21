@@ -18,5 +18,6 @@ dependencies = [
     "passlib[argon2]",
     "python-jose[cryptography]",
     "slowapi",
-    "psycopg2-binary"
+    "psycopg2-binary",
+    "httpx",
 ]

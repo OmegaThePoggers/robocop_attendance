@@ -33,8 +33,13 @@ def seed_dataset(db: Session):
         # Ensure user exists for the embedding relation
         user = db.exec(select(User).where(User.username == student_name)).first()
         if not user:
-            # We seed a default user to satisfy foreign keys
-            user = User(username=student_name, password_hash="dummy", role=UserRole.STUDENT)
+            from .auth_service import get_password_hash
+            # We seed a default user using 'robocop' as the default password for dataset students
+            user = User(
+                username=student_name, 
+                password_hash=get_password_hash("robocop"), 
+                role=UserRole.STUDENT
+            )
             db.add(user)
             db.commit()
             db.refresh(user)
