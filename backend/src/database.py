@@ -11,7 +11,12 @@ database_url = os.getenv(
 # SQLite uses check_same_thread, Postgres doesn't need it.
 engine = create_engine(database_url)
 
+from sqlalchemy import text
+
 def create_db_and_tables():
+    # Ensure pgvector extension exists before creating tables
+    with engine.begin() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
     SQLModel.metadata.create_all(engine)
 
 def get_session():

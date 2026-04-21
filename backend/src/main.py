@@ -7,8 +7,9 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 import os
 
-from .database import create_db_and_tables
-from .embedding_loader import EmbeddingLoader
+from .database import create_db_and_tables, engine
+from .embedding_loader import seed_dataset, EmbeddingLoader
+from .ai.vector_index.embedding_cache import load_all_active_classes
 from .recognition import RecognitionService
 from .video_processor import VideoProcessor
 from .attendance import AttendanceService
@@ -29,15 +30,21 @@ async def lifespan(app: FastAPI):
     # Auto-seed default admin if none exists
     _seed_default_admin()
 
+    # Seed datasets and load FAISS indices
+    from sqlmodel import Session
+    with Session(engine) as session:
+        seed_dataset(session)
+        load_all_active_classes(session)
+
     # Initialize ML services and attach to app.state
-    app.state.embedding_loader = EmbeddingLoader()
-    app.state.recognition_service = RecognitionService(app.state.embedding_loader)
+    app.state.recognition_service = RecognitionService()
     app.state.video_processor = VideoProcessor(app.state.recognition_service)
 
     # Initialize DB-backed services
     app.state.attendance_service = AttendanceService()
     app.state.dispute_service = DisputeService()
     app.state.admin_service = AdminService()
+    app.state.embedding_loader = EmbeddingLoader()
 
     yield
 

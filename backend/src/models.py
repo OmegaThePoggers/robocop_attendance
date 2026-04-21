@@ -1,7 +1,8 @@
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List
-from sqlmodel import Field, SQLModel, Relationship
+from sqlmodel import Field, SQLModel, Relationship, Column
+from pgvector.sqlalchemy import Vector
 
 class ClassGroup(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -114,3 +115,11 @@ class Token(SQLModel):
 class TokenData(SQLModel):
     username: Optional[str] = None
     role: Optional[str] = None
+
+class StudentFace(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    student_id: str = Field(foreign_key="user.username", index=True)
+    # ArcFace outputs 512-dimensional embeddings
+    embedding: List[float] = Field(sa_column=Column(Vector(512)))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+

@@ -16,6 +16,7 @@ export default function Dashboard() {
     const [activeSession, setActiveSession] = useState(null);
     const [activeTab, setActiveTab] = useState('live');
     const [isAdmin, setIsAdmin] = useState(false);
+    const [updateTrigger, setUpdateTrigger] = useState(0); // Add global refresh trigger
     const router = useRouter();
 
     const handleLogout = () => {
@@ -30,7 +31,6 @@ export default function Dashboard() {
     };
 
     const fetchClasses = async () => {
-        // Need to import getClasses from api in a moment
         import('../lib/api').then(({ getClasses }) => {
             getClasses().then(setClasses).catch(console.error);
         });
@@ -52,7 +52,6 @@ export default function Dashboard() {
         return () => clearInterval(interval);
     }, [router]);
 
-    // Auto-switch tabs based on session state
     useEffect(() => {
         if (activeSession) {
             setActiveTab('live');
@@ -82,26 +81,23 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="h-full flex flex-col space-y-6 max-w-[1600px] mx-auto w-full animate-fade-in relative z-10">
+        <div className="h-full flex flex-col space-y-6 max-w-[1600px] mx-auto w-full p-4 md:p-6 lg:p-8 animate-fade-in relative z-10">
             {/* Header / Command Bar */}
-            <div className="glass-panel p-5 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-5 transition-all">
+            <div className="surface-panel p-4 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-5 transition-colors">
                 <div className="flex items-center gap-4 w-full xl:w-auto">
-                    <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-dark-bg/50 border border-dark-border/50 shrink-0">
+                    <div className="relative flex items-center justify-center w-4 h-4 shrink-0">
                         {activeSession ? (
-                            <>
-                                <span className="absolute inset-0 rounded-xl bg-success/20 animate-pulse"></span>
-                                <span className="relative w-3 h-3 rounded-full bg-success shadow-[0_0_15px_rgba(52,211,153,0.8)]"></span>
-                            </>
+                            <span className="w-3 h-3 rounded-full bg-success"></span>
                         ) : (
-                            <span className="w-3 h-3 rounded-full bg-dark-muted shadow-inner"></span>
+                            <span className="w-3 h-3 rounded-full bg-border"></span>
                         )}
                     </div>
                     <div>
-                        <h2 className={`text-base sm:text-lg font-bold uppercase tracking-widest ${activeSession ? 'text-success' : 'text-slate-300'}`}>
-                            {activeSession ? `LIVE: ${activeSession.name}` : 'SYSTEM STANDBY'}
+                        <h2 className={`text-base sm:text-lg font-mono font-medium tracking-tight ${activeSession ? 'text-success' : 'text-textMuted'}`}>
+                            {activeSession ? `[LIVE] ${activeSession.name}` : '[SYSTEM STANDBY]'}
                         </h2>
-                        <p className="text-xs text-dark-muted font-mono mt-0.5">
-                            {activeSession ? `Session started at ${new Date(activeSession.created_at).toLocaleTimeString()}` : 'No active session running'}
+                        <p className="text-xs text-textMuted font-mono mt-0.5">
+                            {activeSession ? `Uptime start: ${new Date(activeSession.created_at).toLocaleTimeString()}` : 'No active tracking session'}
                         </p>
                     </div>
                 </div>
@@ -110,56 +106,56 @@ export default function Dashboard() {
                     {isAdmin && (
                         <button
                             onClick={() => router.push('/admin')}
-                            className="bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 border border-primary-500/30 px-5 py-2.5 font-bold text-xs uppercase tracking-wider rounded-lg transition-all"
+                            className="bg-transparent hover:bg-surfaceHover text-textMain border border-border px-4 py-2 font-mono text-xs uppercase tracking-tight rounded transition-colors"
                         >
                             Admin Console
                         </button>
                     )}
 
                     {!activeSession ? (
-                        <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full sm:w-auto items-center bg-dark-bg/40 p-1.5 rounded-xl border border-dark-border/50">
+                        <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full sm:w-auto items-center">
                             <select
-                                className="input-field py-2 text-sm max-w-[180px] bg-dark-bg text-white border-transparent focus:border-primary-500 rounded-lg"
+                                className="input-field py-2 text-sm max-w-[180px] bg-background text-textMain rounded"
                                 value={selectedClass}
                                 onChange={(e) => setSelectedClass(e.target.value)}
                             >
-                                <option value="" className="text-dark-muted">Select Class</option>
+                                <option value="" className="text-textMuted">Select Course</option>
                                 {classes.map(c => (
                                     <option key={c.id} value={c.id}>{c.name}</option>
                                 ))}
                             </select>
                             <input
                                 type="text"
-                                placeholder="Session Name (e.g. Week 1)"
-                                className="input-field py-2 text-sm w-full sm:w-48 bg-dark-bg text-white border-transparent focus:border-primary-500 rounded-lg"
+                                placeholder="Session ID (e.g. LAB-01)"
+                                className="input-field py-2 text-sm w-full sm:w-48 bg-background text-textMain rounded"
                                 value={sessionName}
                                 onChange={(e) => setSessionName(e.target.value)}
                             />
                             <button
                                 onClick={handleCreateSession}
                                 disabled={!selectedClass || !sessionName}
-                                className="btn-primary py-2 px-6 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+                                className="btn-primary py-2 px-6 flex-shrink-0"
                             >
-                                Start Session
+                                Init Session
                             </button>
                         </div>
                     ) : (
                         <button
                             onClick={handleEndSession}
-                            className="w-full sm:w-auto bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:border-rose-500/50 px-8 py-2.5 font-bold text-sm uppercase tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(244,63,94,0.1)] hover:shadow-[0_0_20px_rgba(244,63,94,0.2)]"
+                            className="btn-danger py-2 px-6 font-mono text-xs uppercase tracking-wider rounded"
                         >
-                            End Session
+                            Terminate Session
                         </button>
                     )}
 
-                    <div className="w-px h-8 bg-dark-border/50 mx-1 hidden sm:block"></div>
+                    <div className="w-px h-6 bg-border mx-2 hidden sm:block"></div>
 
                     <button
                         onClick={handleLogout}
-                        className="btn-secondary px-4 py-2.5 text-xs text-dark-muted hover:text-white"
+                        className="text-textMuted hover:text-danger text-sm font-mono transition-colors"
                         title="Sign Out"
                     >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        [LOGOUT]
                     </button>
                 </div>
             </div>
@@ -170,27 +166,20 @@ export default function Dashboard() {
                 {/* Visual Recognition Panel (Only visible when active) */}
                 {activeSession && (
                     <div className="lg:col-span-5 flex flex-col h-[60vh] lg:h-auto min-h-[500px]">
-                        <div className="glass-panel-heavy flex-grow flex flex-col overflow-hidden relative group">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-500 to-secondary-500 z-20"></div>
-
+                        <div className="surface-panel flex-grow flex flex-col overflow-hidden relative">
                             {/* Panel Header */}
-                            <div className="px-5 py-3 border-b border-dark-border/50 bg-dark-bg/60 flex justify-between items-center backdrop-blur-md relative z-10">
-                                <div className="flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                                    <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Live Recognition Feed</span>
-                                </div>
-                                <div className="flex gap-1.5 opacity-50 group-hover:opacity-100 transition-opacity">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-rose-400"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                            <div className="px-4 py-2 border-b border-border bg-surface flex justify-between items-center">
+                                <span className="text-xs font-mono text-textMuted uppercase tracking-tight">Camera Feed [ACTIVE]</span>
+                                <div className="flex gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-danger animate-pulse"></span>
                                 </div>
                             </div>
 
-                            <div className="flex-grow relative bg-black">
-                                <RecognitionPanel activeSession={activeSession} />
-
-                                {/* Overlay gradient for premium feel */}
-                                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
+                            <div className="flex-grow bg-background relative flex items-center justify-center p-2">
+                                <RecognitionPanel
+                                    activeSession={activeSession}
+                                    onUpdate={() => setUpdateTrigger(prev => prev + 1)}
+                                />
                             </div>
                         </div>
                     </div>
@@ -199,90 +188,72 @@ export default function Dashboard() {
                 {/* Data & Controls Panel */}
                 <div className={`${activeSession ? 'lg:col-span-7' : 'col-span-1'} flex flex-col h-[60vh] lg:h-auto min-h-[500px]`}>
 
-                    {/* Modern Tabs */}
-                    <div className="flex gap-2 mb-2 px-1">
+                    {/* Standard Minimal Tabs */}
+                    <div className="flex gap-1 mb-2 border-b border-border px-2">
                         {activeSession && (
                             <>
                                 <button
                                     onClick={() => setActiveTab('live')}
-                                    className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all relative overflow-hidden group ${activeTab === 'live'
-                                        ? 'bg-dark-bg/80 text-primary-400 border-t border-x border-dark-border/50 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.3)]'
-                                        : 'text-dark-muted hover:text-white hover:bg-dark-bg/40 border-t border-x border-transparent'
+                                    className={`px-4 py-2 text-xs font-mono uppercase tracking-tight transition-colors ${activeTab === 'live'
+                                        ? 'text-textMain border-b-2 border-accent'
+                                        : 'text-textMuted hover:text-textMain border-b-2 border-transparent'
                                         }`}
                                 >
-                                    {activeTab === 'live' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]"></span>}
-                                    <span className="flex items-center gap-2">
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        Live Attendance
-                                    </span>
+                                    Log Stream
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('targets')}
-                                    className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all relative overflow-hidden group ${activeTab === 'targets'
-                                        ? 'bg-dark-bg/80 text-rose-400 border-t border-x border-dark-border/50 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.3)]'
-                                        : 'text-dark-muted hover:text-white hover:bg-dark-bg/40 border-t border-x border-transparent'
+                                    className={`px-4 py-2 text-xs font-mono uppercase tracking-tight transition-colors ${activeTab === 'targets'
+                                        ? 'text-danger border-b-2 border-danger'
+                                        : 'text-textMuted hover:text-danger border-b-2 border-transparent'
                                         }`}
                                 >
-                                    {activeTab === 'targets' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.8)]"></span>}
-                                    <span className="flex items-center gap-2">
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                        Absentees
-                                    </span>
+                                    Missing
                                 </button>
                             </>
                         )}
                         <button
                             onClick={() => setActiveTab('history')}
-                            className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-t-xl transition-all relative overflow-hidden group ${activeTab === 'history'
-                                ? 'bg-dark-bg/80 text-secondary-400 border-t border-x border-dark-border/50 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.3)]'
-                                : 'text-dark-muted hover:text-white hover:bg-dark-bg/40 border-t border-x border-transparent'
+                            className={`px-4 py-2 text-xs font-mono uppercase tracking-tight transition-colors ${activeTab === 'history'
+                                ? 'text-textMain border-b-2 border-accent'
+                                : 'text-textMuted hover:text-textMain border-b-2 border-transparent'
                                 }`}
                         >
-                            {activeTab === 'history' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-secondary-500 shadow-[0_0_10px_rgba(168,85,247,0.8)]"></span>}
-                            <span className="flex items-center gap-2">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-                                Archives
-                            </span>
+                            Database
                         </button>
                     </div>
 
                     {/* Tab Content Container */}
-                    <div className="glass-panel-heavy flex-grow rounded-b-xl rounded-tr-xl flex flex-col overflow-hidden shadow-2xl relative">
-                        {/* Soft top border connecting the active tab */}
-                        <div className="absolute top-0 left-0 w-full h-px bg-dark-border/50 z-10"></div>
-
-                        <div className="flex-grow overflow-auto custom-scrollbar p-1">
+                    <div className="surface-panel flex-grow flex flex-col overflow-hidden">
+                        <div className="flex-grow overflow-auto custom-scrollbar p-2">
                             {activeSession && activeTab === 'live' && (
-                                <div className="h-full flex flex-col gap-4 p-4 animate-fade-in">
-                                    <LiveCorrectionPanel />
-                                    <div className="flex-grow bg-dark-bg/30 border border-dark-border/30 rounded-xl overflow-hidden">
-                                        <AttendanceTable activeSession={activeSession} />
+                                <div className="h-full flex flex-col gap-4 animate-fade-in">
+                                    <LiveCorrectionPanel updateTrigger={updateTrigger} />
+                                    <div className="flex-grow bg-background border border-border rounded overflow-hidden">
+                                        <AttendanceTable activeSession={activeSession} updateTrigger={updateTrigger} />
                                     </div>
                                 </div>
                             )}
 
                             {activeSession && activeTab === 'targets' && (
                                 <div className="h-full animate-fade-in">
-                                    <AbsenteeList />
+                                    <AbsenteeList updateTrigger={updateTrigger} />
                                 </div>
                             )}
 
                             {activeTab === 'history' && (
-                                <div className="h-full animate-fade-in p-2 sm:p-4">
+                                <div className="h-full animate-fade-in p-2">
                                     <SessionHistory />
                                 </div>
                             )}
 
                             {/* Empty State Fallback - Now shows universal logs */}
                             {!activeSession && activeTab !== 'history' && (
-                                <div className="h-full flex flex-col pt-4 px-4 pb-4 animate-fade-in">
-                                    <div className="mb-4 p-4 bg-primary-900/10 border border-primary-500/20 rounded-xl flex items-center justify-between text-sm text-primary-100 shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <svg className="w-5 h-5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            <p>No active class session. Showing universal attendance logs. Select a class and start a session to capture live attendance.</p>
-                                        </div>
+                                <div className="h-full flex flex-col pt-2 px-2 pb-2 animate-fade-in">
+                                    <div className="mb-4 p-3 bg-surface border border-border rounded flex items-center justify-between text-sm text-textMuted">
+                                        <p className="font-mono">System dormant. Select a course to initialize tracking sequence.</p>
                                     </div>
-                                    <div className="flex-grow bg-dark-bg/30 border border-dark-border/30 rounded-xl overflow-hidden shadow-lg h-[400px]">
+                                    <div className="flex-grow bg-background border border-border rounded overflow-hidden h-[400px]">
                                         <AttendanceTable activeSession={null} />
                                     </div>
                                 </div>

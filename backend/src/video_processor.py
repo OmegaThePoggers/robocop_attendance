@@ -1,6 +1,7 @@
 import cv2
 import os
 import collections
+from sqlmodel import Session
 from typing import List, Dict, Tuple
 from .recognition import RecognitionService
 
@@ -8,7 +9,7 @@ class VideoProcessor:
     def __init__(self, recognition_service: RecognitionService):
         self.recognition_service = recognition_service
 
-    def process_video(self, video_path: str, interval: int = 1) -> Dict:
+    def process_video(self, video_path: str, class_id: str, db: Session, interval: int = 1) -> Dict:
         """
         Processes a video file, extracting frames at a given interval (in seconds),
         and recognizing faces in each frame.
@@ -16,6 +17,8 @@ class VideoProcessor:
         Args:
             video_path: Path to the video file.
             interval: Time interval in seconds between processed frames.
+            class_id: Class scope for FAISS filtering.
+            db: Database session for FAISS fallback.
             
         Returns:
             Dict containing the consensus identity and detailed frame results.
@@ -47,7 +50,7 @@ class VideoProcessor:
                 
                 # We interpret the numpy array as an image file 
                 # face_recognition can accept a numpy array directly too
-                results = self.recognition_service.recognize_image(rgb_frame)
+                results = self.recognition_service.recognize_image(rgb_frame, class_id=class_id, db=db)
                 
                 for res in results:
                     name = res['name']

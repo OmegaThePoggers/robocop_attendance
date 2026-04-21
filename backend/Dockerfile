@@ -17,21 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml ./
 
 # Install dependencies using pip 
-# (Installing them directly since we just have a pyproject.toml without poetry/pipenv for now, we'll parse it or just install the same packages)
-RUN pip install --no-cache-dir \
-    "fastapi>=0.100.0,<0.112.0" \
-    "uvicorn[standard]>=0.20.0,<0.30.0" \
-    "face-recognition==1.3.0" \
-    "numpy==1.24.4" \
-    "setuptools" \
-    "face-recognition-models @ git+https://github.com/ageitgey/face_recognition_models" \
-    "python-multipart" \
-    "opencv-python-headless" \
-    "sqlmodel" \
-    "passlib[argon2]" \
-    "python-jose[cryptography]" \
-    "slowapi" \
-    "psycopg2-binary"
+# Since we have pyproject.toml, we can install the package and its dependencies
+RUN pip install --no-cache-dir .
 
 # Copy application code
 COPY src/ src/

@@ -1,9 +1,11 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlmodel import Session, select
 from sqlalchemy import func
 from datetime import datetime, timedelta
 import os
+import glob
 
 from ..dependencies import (
     allow_admin,
@@ -217,3 +219,24 @@ def get_table_data(
         "offset": offset,
         "data": rows,
     }
+
+
+@router.get("/student-photo/{username}")
+def get_student_photo(
+    username: str,
+    current_user: User = Depends(allow_teacher_admin),
+):
+    """Serve the enrolled face photo for a student from the dataset directory."""
+    dataset_dir = os.getenv("DATASET_PATH", "dataset")
+    student_dir = os.path.join(dataset_dir, username)
+
+    if not os.path.isdir(student_dir):
+        raise HTTPException(status_code=404, detail="No enrolled photo found")
+
+    # Find the first image file in the student's directory
+    for ext in ["*.png", "*.jpg", "*.jpeg", "*.webp"]:
+        matches = glob.glob(os.path.join(student_dir, ext))
+        if matches:
+            return FileResponse(matches[0], media_type="image/png")
+
+    raise HTTPException(status_code=404, detail="No enrolled photo found")

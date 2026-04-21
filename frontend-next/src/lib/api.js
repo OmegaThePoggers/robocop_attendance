@@ -195,7 +195,14 @@ export async function recognizeImage(sessionId, file) {
     });
 
     if (!response.ok) {
-        throw new Error('Image recognition failed');
+        let errorDetail = 'Image recognition failed';
+        try {
+            const errData = await response.json();
+            errorDetail = errData.detail || errorDetail;
+        } catch (e) {
+            errorDetail = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorDetail);
     }
     return await response.json();
 }
@@ -214,13 +221,18 @@ export async function detectFaces(file) {
     return await response.json();
 }
 
-export async function recognizeVideo(file) {
+export async function recognizeVideo(sessionId, file) {
     const formData = new FormData();
     formData.append('file', file);
 
     const headers = getAuthHeaders(null);
 
-    const response = await fetch(`${API_URL}/recognize/video`, {
+    let url = `${API_URL}/recognize/video`;
+    if (sessionId) {
+        url += `?session_id=${sessionId}`;
+    }
+
+    const response = await fetch(url, {
         method: 'POST',
         headers: headers,
         body: formData,
@@ -427,5 +439,18 @@ export async function getTableData(tableName, limit = 100, offset = 0) {
         return await response.json();
     } catch {
         return { data: [], total: 0 };
+    }
+}
+
+export async function fetchStudentPhoto(username) {
+    try {
+        const response = await fetch(`${API_URL}/admin/student-photo/${encodeURIComponent(username)}`, {
+            headers: getAuthHeaders(null)
+        });
+        if (!response.ok) return null;
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+    } catch {
+        return null;
     }
 }

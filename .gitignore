@@ -31,10 +31,19 @@ dist/
 *.swp
 *.swo
 .DS_Store
+
+# Agent / GSD / Context directories
 .agent
+.gsd/
+.gemini/
+.context/
 
 # Dataset (optional: if you want to keep images local only)
-# backend/dataset/
+# dataset/
 
 # Uploaded evidence and session images
 backend/static/
+
+# AI model weights (auto-downloaded)
+backend/models/
+*.onnx

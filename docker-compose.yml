@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:15-alpine
+    image: ankane/pgvector:latest
     container_name: robocop_db
     restart: always
     environment:

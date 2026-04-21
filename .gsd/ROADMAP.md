@@ -42,3 +42,7 @@
 ### Phase 8: Migrate to Advanced Face Recognition Backend
 **Status**: ⏳ Pending
 **Objective**: Migrate the backend to use SCRFD, ArcFace, PGVector, and FAISS for significantly improved face recognition accuracy and speed.
+
+### Phase 9: Frontend Aesthetic Overhaul (Minimalist Dark Mode)
+**Status**: ⏳ Pending
+**Objective**: Redesign the existing Next.js frontend to have a highly polished, academically sober, minimalistic dark-mode UI. Remove generic AI-generated aesthetics, standardize Tailwind configurations for sharp typography and spacing, and ensure a cohesive high-end UX for both teachers and students.

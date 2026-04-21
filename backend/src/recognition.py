@@ -1,11 +1,13 @@
-import face_recognition
+import cv2
 import numpy as np
 from typing import List, Dict, Optional, Tuple
-from .embedding_loader import EmbeddingLoader
+from sqlmodel import Session
+from .ai.pipeline import pipeline
 
 class RecognitionService:
-    def __init__(self, embedding_loader: EmbeddingLoader):
-        self.embedding_loader = embedding_loader
+    def __init__(self, embedding_loader=None):
+        # The embedding_loader parameter is kept for compatibility with main.py instantiation
+        pass
 
     def detect_only(self, image_file) -> List[Tuple[int, int, int, int]]:
         """
@@ -14,70 +16,34 @@ class RecognitionService:
         """
         image = image_file
         if not isinstance(image, np.ndarray):
-            image = face_recognition.load_image_file(image_file)
+            arr = np.frombuffer(image_file, np.uint8)
+            image = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         
-        # Detect face locations (using HOG by default for speed/CPU)
-        # First pass: Default upsampling (1)
-        face_locations = face_recognition.face_locations(image)
+        # SCRFD expects BGR
+        bgr_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        _, raw_faces, _ = pipeline.detector.detect_and_align(bgr_image)
         
-        # Second pass: If no faces found, try upsampling for smaller/blurry faces
-        if not face_locations:
-             # print("No faces found in first pass. Retrying with upsample=2...") 
-             # (Commented print to reduce log spam on live preview)
-             face_locations = face_recognition.face_locations(image, number_of_times_to_upsample=2)
+        face_locations = []
+        if raw_faces:
+            for face in raw_faces:
+                l, t, r, b = map(int, face.bbox)
+                face_locations.append((t, r, b, l))
 
         return face_locations
 
-    def recognize_image(self, image_file, tolerance: float = 0.6) -> List[Dict]:
+    def recognize_image(self, image_file, class_id: str, db: Session, tolerance: float = 0.6) -> List[Dict]:
         """
         Detects faces in an image and matches them against known students.
-        
-        Args:
-            image_file: numpy array or file-like object compatible with face_recognition.load_image_file
-            tolerance: Euclidean distance threshold for matching. Lower is stricter.
-            
-        Returns:
-            List of dictionaries containing 'name', 'bounding_box', and 'distance'.
         """
-        # Load image (if it's a file path or file-like object)
         image = image_file
         if not isinstance(image, np.ndarray):
-            image = face_recognition.load_image_file(image_file)
-        
-        face_locations = self.detect_only(image)
-        
-        if not face_locations:
-            return []
-
-        # Compute encodings
-        face_encodings = face_recognition.face_encodings(image, known_face_locations=face_locations)
-
-        known_encodings = self.embedding_loader.get_known_face_encodings()
-        known_names = self.embedding_loader.get_known_face_names()
-
-        results = []
-
-        for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-            name = "Unknown"
-            distance = 0.0
+            arr = np.frombuffer(image_file, np.uint8)
+            image = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             
-            if known_encodings:
-                # Calculate distances to all known faces
-                face_distances = face_recognition.face_distance(known_encodings, face_encoding)
-                
-                # Find the best match
-                best_match_index = np.argmin(face_distances)
-                if face_distances[best_match_index] <= tolerance:
-                    name = known_names[best_match_index]
-                    distance = float(face_distances[best_match_index])
-                else:
-                    # Logic for unknown: we take the min distance even if it's unknown, for debugging
-                    distance = float(face_distances[best_match_index])
+        bgr_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        _, img_encoded = cv2.imencode('.jpg', bgr_image)
+        image_bytes = img_encoded.tobytes()
 
-            results.append({
-                "name": name,
-                "bounding_box": [top, right, bottom, left], # CSS order: top, right, bottom, left
-                "distance": distance
-            })
-
-        return results
+        return pipeline.process_image(image_bytes, class_id, db)

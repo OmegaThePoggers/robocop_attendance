@@ -1,69 +1,152 @@
 "use client";
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { recognizeImage, recognizeVideo, detectFaces } from '../lib/api';
 
-export default function RecognitionPanel({ activeSession }) {
+export default function RecognitionPanel({ activeSession, onUpdate }) {
     const videoRef = useRef(null);
-    const [mode, setMode] = useState('camera'); // 'image', 'video', 'camera'
+    const containerRef = useRef(null);
+    const streamRef = useRef(null);
+    const processingRef = useRef(false);
+    const [mode, setMode] = useState('camera');
     const [file, setFile] = useState(null);
     const [preview, setPreview] = useState(null);
     const [detectedFaces, setDetectedFaces] = useState([]);
     const [processing, setProcessing] = useState(false);
     const [message, setMessage] = useState('');
+    const [lastDetectionTime, setLastDetectionTime] = useState(null);
+
+    // Stop any active camera stream
+    const stopStream = useCallback(() => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+    }, []);
+
+    const switchMode = (newMode) => {
+        stopStream();
+        setDetectedFaces([]);
+        setFile(null);
+        setPreview(null);
+        setMode(newMode);
+        setMessage('');
+    };
 
     // Camera Stream Logic
     useEffect(() => {
-        let stream = null;
+        if (mode !== 'camera') return;
+
+        let cancelled = false;
         const startCamera = async () => {
-            if (mode === 'camera' && videoRef.current) {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    videoRef.current.srcObject = stream;
-                } catch (err) {
-                    console.error("Camera Access Error:", err);
-                    setMessage("CAMERA ERROR: CHECK PERMISSIONS");
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+                if (cancelled) {
+                    stream.getTracks().forEach(t => t.stop());
+                    return;
                 }
+                streamRef.current = stream;
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                }
+            } catch (err) {
+                console.error("Camera Access Error:", err);
+                setMessage("CAMERA ERROR: CHECK PERMISSIONS");
             }
         };
 
-        if (mode === 'camera') startCamera();
+        startCamera();
 
         return () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
+            cancelled = true;
+            stopStream();
         };
-    }, [mode]);
+    }, [mode, stopStream]);
 
-    // Live Detection Loop
+    // Live Detection Loop — with concurrent request guard
     useEffect(() => {
         let interval;
         if (mode === 'camera' && activeSession) {
             interval = setInterval(async () => {
-                if (videoRef.current && !processing) {
-                    // Capture frame
+                // Skip if already processing a frame or video isn't ready
+                if (processingRef.current) return;
+                if (!videoRef.current || videoRef.current.videoWidth === 0) return;
+
+                processingRef.current = true;
+                try {
                     const canvas = document.createElement('canvas');
                     canvas.width = videoRef.current.videoWidth;
                     canvas.height = videoRef.current.videoHeight;
                     canvas.getContext('2d').drawImage(videoRef.current, 0, 0);
 
-                    try {
-                        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
-                        const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
+                    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.8));
+                    const captureFile = new File([blob], "capture.jpg", { type: "image/jpeg" });
 
-                        const response = await recognizeImage(activeSession.id, file);
-                        if (response && response.faces) {
-                            setDetectedFaces(response.faces);
+                    const response = await recognizeImage(activeSession.id, captureFile);
+                    if (response && response.faces) {
+                        setDetectedFaces(response.faces);
+                        setLastDetectionTime(Date.now());
+
+                        // Trigger attendance refresh if any faces were recognized
+                        const recognized = response.faces.filter(f => f.name !== "Unknown");
+                        if (recognized.length > 0 && onUpdate) {
+                            onUpdate();
                         }
-                    } catch (e) {
-                        console.error("Frame processing failed", e);
                     }
+                } catch (e) {
+                    console.error("Frame processing failed", e);
+                } finally {
+                    processingRef.current = false;
                 }
-            }, 3000); // 3s polling
+            }, 3000);
         }
         return () => clearInterval(interval);
-    }, [mode, activeSession, processing]);
+    }, [mode, activeSession, onUpdate]);
+
+    // Compute bounding box position accounting for object-contain
+    const computeBoxStyle = useCallback((face) => {
+        if (!videoRef.current || !containerRef.current) return null;
+
+        const videoW = videoRef.current.videoWidth;
+        const videoH = videoRef.current.videoHeight;
+        if (!videoW || !videoH) return null;
+
+        const containerW = containerRef.current.clientWidth;
+        const containerH = containerRef.current.clientHeight;
+
+        // Compute the actual rendered video dimensions inside object-contain
+        const videoAspect = videoW / videoH;
+        const containerAspect = containerW / containerH;
+
+        let renderW, renderH, offsetX, offsetY;
+        if (videoAspect > containerAspect) {
+            // Video wider than container — letterboxed vertically
+            renderW = containerW;
+            renderH = containerW / videoAspect;
+            offsetX = 0;
+            offsetY = (containerH - renderH) / 2;
+        } else {
+            // Video taller — pillarboxed horizontally
+            renderH = containerH;
+            renderW = containerH * videoAspect;
+            offsetX = (containerW - renderW) / 2;
+            offsetY = 0;
+        }
+
+        const [top, right, bottom, left] = face.bounding_box;
+
+        return {
+            top: `${offsetY + (top / videoH) * renderH}px`,
+            left: `${offsetX + (left / videoW) * renderW}px`,
+            width: `${((right - left) / videoW) * renderW}px`,
+            height: `${((bottom - top) / videoH) * renderH}px`,
+        };
+    }, []);
 
 
     const handleFileChange = (e) => {
@@ -81,14 +164,27 @@ export default function RecognitionPanel({ activeSession }) {
             alert("Please start a session first.");
             return;
         }
+        if (!file) {
+            setMessage("Please select a file first.");
+            return;
+        }
         setProcessing(true);
         setMessage("Processing media... Please wait.");
         try {
-            if (mode === 'image') await recognizeImage(activeSession.id, file);
-            if (mode === 'video') await recognizeVideo(activeSession.id, file);
+            let response;
+            if (mode === 'image') {
+                response = await recognizeImage(activeSession.id, file);
+            } else if (mode === 'video') {
+                response = await recognizeVideo(activeSession.id, file);
+            }
+            if (response && response.faces) {
+                setDetectedFaces(response.faces);
+            }
             setMessage("Processing complete. Attendance logs updated.");
+            if (onUpdate) onUpdate();
         } catch (e) {
-            setMessage("Processing failed. Please try again.");
+            console.error("Upload process failed:", e);
+            setMessage(`Processing failed: ${e.message || 'Please try again.'}`);
         } finally {
             setProcessing(false);
         }
@@ -99,7 +195,7 @@ export default function RecognitionPanel({ activeSession }) {
             {/* Toolbar */}
             <div className="flex border-b border-dark-border/50 bg-dark-bg/80 backdrop-blur-md">
                 <button
-                    onClick={() => setMode('camera')}
+                    onClick={() => switchMode('camera')}
                     className={`flex-1 py-3 text-xs uppercase font-bold tracking-widest transition-all ${mode === 'camera' ? 'bg-primary-500/10 text-primary-400 border-b-2 border-primary-500 shadow-[inset_0_-2px_10px_rgba(99,102,241,0.2)]' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
                         }`}
                 >
@@ -109,7 +205,7 @@ export default function RecognitionPanel({ activeSession }) {
                     </span>
                 </button>
                 <button
-                    onClick={() => setMode('image')}
+                    onClick={() => switchMode('image')}
                     className={`flex-1 py-3 text-xs uppercase font-bold tracking-widest transition-all ${mode === 'image' ? 'bg-primary-500/10 text-primary-400 border-b-2 border-primary-500 shadow-[inset_0_-2px_10px_rgba(99,102,241,0.2)]' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
                         }`}
                 >
@@ -119,7 +215,7 @@ export default function RecognitionPanel({ activeSession }) {
                     </span>
                 </button>
                 <button
-                    onClick={() => setMode('video')}
+                    onClick={() => switchMode('video')}
                     className={`flex-1 py-3 text-xs uppercase font-bold tracking-widest transition-all ${mode === 'video' ? 'bg-primary-500/10 text-primary-400 border-b-2 border-primary-500 shadow-[inset_0_-2px_10px_rgba(99,102,241,0.2)]' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
                         }`}
                 >
@@ -131,8 +227,8 @@ export default function RecognitionPanel({ activeSession }) {
             </div>
 
             {/* Viewport */}
-            <div className="flex-1 bg-black relative group overflow-hidden">
-                {/* Modern subtle grid - more premium than the previous explicit grid */}
+            <div className="flex-1 bg-black relative group overflow-hidden" ref={containerRef}>
+                {/* Modern subtle grid */}
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.05)_0,transparent_100%)] pointer-events-none z-0"></div>
 
                 {mode === 'camera' && (
@@ -152,6 +248,14 @@ export default function RecognitionPanel({ activeSession }) {
                             </div>
                         )}
 
+                        {/* Detection flash indicator */}
+                        {lastDetectionTime && (
+                            <div
+                                key={lastDetectionTime}
+                                className="absolute inset-0 border-2 border-primary-400/40 pointer-events-none z-10 animate-[ping_0.5s_ease-out_1]"
+                            />
+                        )}
+
                         {/* Target Reticle (Decorative) */}
                         <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center opacity-30">
                             <div className="w-64 h-64 border border-white/20 rounded-full relative">
@@ -162,26 +266,18 @@ export default function RecognitionPanel({ activeSession }) {
                             </div>
                         </div>
 
-                        {/* Detected Faces Overlay */}
+                        {/* Detected Faces Overlay — pixel-positioned for object-contain */}
                         {detectedFaces.map((face, i) => {
-                            if (!videoRef.current) return null;
-                            const videoW = videoRef.current.videoWidth;
-                            const videoH = videoRef.current.videoHeight;
-                            if (!videoW || !videoH) return null;
+                            const boxStyle = computeBoxStyle(face);
+                            if (!boxStyle) return null;
 
-                            const [top, right, bottom, left] = face.bounding_box;
                             const isUnknown = face.name === "Unknown";
 
                             return (
                                 <div
                                     key={i}
                                     className={`absolute border-2 z-30 transition-all duration-300 ${isUnknown ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 'border-success shadow-[0_0_15px_rgba(34,197,94,0.5)]'}`}
-                                    style={{
-                                        top: `${(top / videoH) * 100}%`,
-                                        left: `${(left / videoW) * 100}%`,
-                                        width: `${((right - left) / videoW) * 100}%`,
-                                        height: `${((bottom - top) / videoH) * 100}%`
-                                    }}
+                                    style={boxStyle}
                                 >
                                     {/* Corner Accents */}
                                     <div className={`absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 ${isUnknown ? 'border-amber-400' : 'border-emerald-400'}`}></div>
@@ -222,7 +318,6 @@ export default function RecognitionPanel({ activeSession }) {
                                 <h3 className="text-lg font-bold text-white mb-2">Upload {mode === 'image' ? 'Image' : 'Video'}</h3>
                                 <p className="text-xs text-dark-muted font-medium">Drag and drop or select a file to begin analysis</p>
 
-                                {/* Invisible input covering the whole dropzone area */}
                                 <input
                                     type="file"
                                     accept={mode === 'image' ? "image/*" : "video/*"}
@@ -239,40 +334,43 @@ export default function RecognitionPanel({ activeSession }) {
             {mode !== 'camera' && (
                 <div className="p-5 border-t border-dark-border/50 bg-dark-bg/80 backdrop-blur-md relative z-20">
                     <div className="flex items-center gap-4 max-w-2xl mx-auto">
-                        <div className="relative flex-grow">
-                            <input
-                                type="file"
-                                accept={mode === 'image' ? "image/*" : "video/*"}
-                                onChange={handleFileChange}
-                                className="block w-full text-sm text-dark-muted file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-dark-bg file:text-white hover:file:bg-white/10 transition-colors file:cursor-pointer cursor-pointer border border-dark-border/50 rounded-lg p-1"
-                            />
-                        </div>
-                        <button
-                            onClick={handleProcess}
-                            disabled={!file || processing}
-                            className="btn-primary py-3 px-8 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                        >
-                            {processing ? (
-                                <>
-                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Analyzing...
-                                </>
-                            ) : (
-                                <>
-                                    <svg className="w-4 h-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                                    Process Media
-                                </>
+                        <div className="flex-grow flex justify-end gap-2">
+                            {file && (
+                                <button
+                                    onClick={() => { setFile(null); setPreview(null); setMessage(''); }}
+                                    disabled={processing}
+                                    className="bg-transparent hover:bg-white/5 text-slate-300 py-3 px-6 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                                >
+                                    Clear Selection
+                                </button>
                             )}
-                        </button>
-                    </div>
-                    {message && (
-                        <div className={`mt-3 text-xs text-center font-medium font-mono ${message.includes('complete') ? 'text-success' : message.includes('failed') ? 'text-rose-500' : 'text-primary-400'}`}>
-                            {message}
+                            <button
+                                onClick={handleProcess}
+                                disabled={!file || processing}
+                                className="btn-primary py-3 px-8 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {processing ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Analyzing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-4 h-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                        Process Media
+                                    </>
+                                )}
+                            </button>
                         </div>
-                    )}
+                        {message && (
+                            <div className={`mt-3 text-xs text-center font-medium font-mono ${message.includes('complete') ? 'text-success' : message.includes('failed') ? 'text-rose-500' : 'text-primary-400'}`}>
+                                {message}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
