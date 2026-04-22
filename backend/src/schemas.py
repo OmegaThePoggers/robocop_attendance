@@ -66,6 +66,37 @@ class TableDataResponse(BaseModel):
     data: List[dict]
 
 
+# ---------- Admin Account Management ----------
+
+class AdminCreateUser(BaseModel):
+    username: str
+    role: str = "student"
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    department: Optional[str] = None
+    sap_id: Optional[str] = None
+    roll_number: Optional[str] = None
+    course: Optional[str] = None
+    subjects: Optional[str] = None  # comma-separated
+
+
+class AdminBatchCreateRequest(BaseModel):
+    users: List[AdminCreateUser]
+
+
+class AdminBatchCreateResponse(BaseModel):
+    created: List[str]
+    skipped: List[str]
+
+
+class AdminBatchDeleteRequest(BaseModel):
+    user_ids: List[int]
+
+
+class AdminRoleUpdateRequest(BaseModel):
+    role: str
+
+
 # ---------- Recognition ----------
 
 class BoundingBox(BaseModel):

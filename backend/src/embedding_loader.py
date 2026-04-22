@@ -14,30 +14,34 @@ def seed_dataset(db: Session):
         print(f"Dataset directory '{DATASET_DIR}' not found. Skipping seeding.")
         return
 
-    # Check if we already have faces
-    existing_faces = db.exec(select(StudentFace)).first()
-    if existing_faces:
-        print("pgvector database already contains face embeddings. Skipping seeding.")
-        return
-        
+    # Build set of student_ids that already have embeddings
+    existing_embedded = {sf.student_id for sf in db.exec(select(StudentFace)).all()}
+
+    seeded_count = 0
     for student_name in os.listdir(DATASET_DIR):
         student_dir = os.path.join(DATASET_DIR, student_name)
         if not os.path.isdir(student_dir):
             continue
 
-        print(f"Processing student for seeding: {student_name}")
+        # Skip if this student already has embeddings
+        if student_name in existing_embedded:
+            print(f"Skipping {student_name} — already in pgvector.")
+            continue
+
         image_files = [f for f in os.listdir(student_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
         if not image_files:
+            print(f"No images found for {student_name}, skipping.")
             continue
+
+        print(f"Seeding new student: {student_name}")
 
         # Ensure user exists for the embedding relation
         user = db.exec(select(User).where(User.username == student_name)).first()
         if not user:
             from .auth_service import get_password_hash
-            # We seed a default user using 'robocop' as the default password for dataset students
             user = User(
-                username=student_name, 
-                password_hash=get_password_hash("robocop"), 
+                username=student_name,
+                password_hash=get_password_hash("robocop"),
                 role=UserRole.STUDENT
             )
             db.add(user)
@@ -48,26 +52,29 @@ def seed_dataset(db: Session):
             image_path = os.path.join(student_dir, image_file)
             try:
                 bgr_image = cv2.imread(image_path)
-                if bgr_image is None: 
+                if bgr_image is None:
+                    print(f"  Could not read image: {image_file}")
                     continue
-                
+
                 # Detect and embed
                 aligned_crops, raw_faces, _ = pipeline.detector.detect_and_align(bgr_image)
-                if not aligned_crops: 
+                if not aligned_crops:
+                    print(f"  No face detected in {image_file} for {student_name}")
                     continue
-                
-                # Take the first face (assumption: dataset contains cropped/clear faces)
+
+                # Take the first face (dataset should contain clear, individual photos)
                 embeddings = pipeline.embedder.generate_batch_from_crops([aligned_crops[0]])
-                
-                # Insert to DB
+
                 sf = StudentFace(student_id=student_name, embedding=embeddings[0].tolist())
                 db.add(sf)
                 db.commit()
-                
+                seeded_count += 1
+                print(f"  Embedded {image_file} for {student_name}")
+
             except Exception as e:
-                print(f"Error processing {image_file} for {student_name}: {e}")
-                
-    print("Seeding complete.")
+                print(f"  Error processing {image_file} for {student_name}: {e}")
+
+    print(f"Seeding complete. {seeded_count} new embedding(s) added.")
 
 
 class EmbeddingLoader:

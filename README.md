@@ -14,14 +14,17 @@
 
 ## Features
 
+- **Academic Dashboards** — Distinct portals for Admins, Teachers, and Students with analytics
 - **Real-time Face Recognition** — Camera feed, image upload, and video upload support
+- **AI Tutoring & Chat** — Multi-turn AI chat powered by Groq/Gemini for automated student assistance
+- **Doubt Resolution** — Auto-classify subject doubts and allow teachers to resolve them later
+- **Assignments & Marks** — End-to-end academic tracking, submissions, and grading
 - **Dual-layer Matching** — FAISS in-memory index (< 2ms) with pgvector fallback
 - **Session Management** — Named sessions with class scoping and attendance tracking
 - **Absentee Detection** — Automatic absent list generation per session
 - **Unknown Face Tracking** — Cropped face captures for unidentified individuals
-- **Dispute Resolution** — Students can dispute missed attendance with side-by-side photo comparison for admin review
+- **Dispute Resolution** — Students can dispute missed attendance with side-by-side photo comparison
 - **Class Management** — Create classes, assign students, manage rosters
-- **Role-based Access** — Admin, Teacher, Student, and Kiosk roles
 - **Audit Logging** — Full action logging for admin operations
 
 ## Prerequisites
@@ -105,7 +108,7 @@ Students can self-register through the frontend with a selfie photo.
 
 ## Environment Variables
 
-The following are configured in `docker-compose.yml`:
+The following variables should be configured by creating a `.env` file in the root directory:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -113,8 +116,10 @@ The following are configured in `docker-compose.yml`:
 | `SECRET_KEY` | `change-me-in-production` | JWT signing key |
 | `ADMIN_DEFAULT_PASSWORD` | `robocop` | Default admin password |
 | `DATASET_PATH` | `/app/dataset` | Path to enrolled face images |
+| `GROQ_API_KEY` | (empty) | **Required** for AI Chat / Doubt resolution |
+| `GEMINI_API_KEY` | (empty) | **Optional** fallback for AI Chat / Doubt resolution |
 
-> ⚠️ **For production**: Override `SECRET_KEY` and `ADMIN_DEFAULT_PASSWORD` with secure values using a `.env` file.
+> ⚠️ **For production**: You must create a `.env` file parallel to `docker-compose.yml` containing the production secrets and API keys to prevent them from being logged in version control.
 
 ## Development
 

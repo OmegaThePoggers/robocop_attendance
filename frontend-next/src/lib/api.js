@@ -190,6 +190,40 @@ export async function assignStudentClass(userId, classId) {
 export async function getDatabaseTables() { return (await apiGet('/admin/database/tables')) || []; }
 export async function getTableData(table, limit = 100, offset = 0) { return (await apiGet(`/admin/database/${table}?limit=${limit}&offset=${offset}`)) || { data: [], total: 0 }; }
 
+// ── Admin Account Management ──────────────────────────────────────────────
+
+export async function adminCreateUser(data) { return apiPost('/admin/users', data); }
+export async function adminBatchCreate(users) { return apiPost('/admin/users/batch', { users }); }
+export async function adminDeleteUser(userId) {
+    const r = await fetch(`${API_URL}/admin/users/${userId}`, { method: 'DELETE', headers: getAuthHeaders() });
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.detail || 'Delete failed'); }
+    return r.json();
+}
+export async function adminBatchDelete(userIds) {
+    const r = await fetch(`${API_URL}/admin/users/batch`, {
+        method: 'DELETE', headers: getAuthHeaders(), body: JSON.stringify({ user_ids: userIds }),
+    });
+    if (!r.ok) throw new Error('Batch delete failed');
+    return r.json();
+}
+export async function adminUpdateRole(userId, role) {
+    const r = await fetch(`${API_URL}/admin/users/${userId}/role`, {
+        method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify({ role }),
+    });
+    if (!r.ok) throw new Error('Role update failed');
+    return r.json();
+}
+export async function adminResetPassword(userId) {
+    return apiPost(`/admin/users/${userId}/reset-password`, {});
+}
+
+export async function fetchStudentPhoto(username) {
+    const res = await fetch(`${API_URL}/admin/users/${username}/photo`, { headers: getAuthHeaders() });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+}
+
 // ── Doubts (Cogni) ─────────────────────────────────────────────────────────
 
 export async function submitDoubt(text, subject = null, autoSolve = true) {

@@ -45,10 +45,20 @@ def load_class_embeddings(class_id: str, db: Session) -> list[tuple[str, np.ndar
     """
     Fetch all (student_id, embedding) pairs for students enrolled in class_id
     from student_faces in PostgreSQL.
+    When class_id is "ALL", returns embeddings for ALL students regardless of class.
     Returns a list of (student_id, embedding_array) tuples.
     """
-    rows = db.execute(
-        text(
+    if class_id == "ALL":
+        query = text(
+            """
+            SELECT sf.student_id, sf.embedding::text
+            FROM studentface sf
+            WHERE sf.embedding IS NOT NULL
+            """
+        )
+        rows = db.execute(query)
+    else:
+        query = text(
             """
             SELECT sf.student_id, sf.embedding::text
             FROM studentface sf
@@ -56,9 +66,9 @@ def load_class_embeddings(class_id: str, db: Session) -> list[tuple[str, np.ndar
             WHERE u.class_id = :class_id
               AND sf.embedding IS NOT NULL
             """
-        ),
-        {"class_id": class_id},
-    )
+        )
+        rows = db.execute(query, {"class_id": class_id})
+
     result = []
     for row in rows.fetchall():
         student_id, emb_text = row
@@ -128,7 +138,14 @@ def load_all_active_classes(db: Session) -> None:
     """
     Startup optimisation: preload FAISS indices for all classes that have
     at least one enrolled face so the first recognition request is fast.
+    Always preloads the "ALL" index for sessions without class scope.
     """
+    # Always preload the global index
+    try:
+        get_faiss_index("ALL", db)
+    except Exception as e:
+        logger.error("FAISS startup: failed to build ALL index: %s", e)
+
     rows = db.execute(
         text(
             """
@@ -141,7 +158,7 @@ def load_all_active_classes(db: Session) -> None:
     )
     class_ids = [str(r[0]) for r in rows.fetchall()]
     if not class_ids:
-        logger.info("FAISS startup: no classes with enrolled faces found")
+        logger.info("FAISS startup: no class-specific indices to preload")
         return
 
     logger.info("FAISS startup: preloading indices for %d class(es)", len(class_ids))

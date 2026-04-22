@@ -23,6 +23,17 @@ from ..models import (
     AttendanceRecord,
     UnknownFace,
     AttendanceSource,
+    # Cognify models
+    Doubt,
+    DoubtMessage,
+    Assignment,
+    Submission,
+    Notification,
+    Resource,
+    Schedule,
+    DirectMessage,
+    SubjectMark,
+    StudentFace,
 )
 from ..schemas import (
     MapUserRequest,
@@ -33,12 +44,227 @@ from ..schemas import (
     MapIdentityResponse,
     CleanupResponse,
     TableDataResponse,
+    AdminCreateUser,
+    AdminBatchCreateRequest,
+    AdminBatchCreateResponse,
+    AdminBatchDeleteRequest,
+    AdminRoleUpdateRequest,
 )
 from ..admin_service import AdminService
+from ..auth_service import get_password_hash
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
+DEFAULT_PASSWORD = "robocop"
 
+
+# --- Account Management ---
+
+def _create_single_user(data: AdminCreateUser, session: Session) -> User:
+    """Create a single user from AdminCreateUser schema. Returns the User object."""
+    import json
+    subjects_json = None
+    if data.subjects:
+        subject_list = [s.strip() for s in data.subjects.split(",") if s.strip()]
+        subjects_json = json.dumps(subject_list)
+
+    db_user = User(
+        username=data.username,
+        password_hash=get_password_hash(DEFAULT_PASSWORD),
+        role=UserRole(data.role),
+        full_name=data.full_name,
+        email=data.email,
+        department=data.department,
+        sap_id=data.sap_id,
+        roll_number=data.roll_number,
+        course=data.course,
+        subjects_json=subjects_json,
+    )
+    session.add(db_user)
+    return db_user
+
+
+def _cleanup_user_data(username: str, session: Session):
+    """Delete all records in other tables that reference this user's username."""
+    # 1. DoubtMessages (by doubt_id or sender_username)
+    # First find doubts where user is involved
+    user_doubts = session.exec(select(Doubt).where((Doubt.student_username == username) | (Doubt.teacher_username == username))).all()
+    for doubt in user_doubts:
+        # Delete messages for this doubt
+        msgs = session.exec(select(DoubtMessage).where(DoubtMessage.doubt_id == doubt.id)).all()
+        for m in msgs: session.delete(m)
+    
+    # 2. Doubts themselves
+    for doubt in user_doubts: session.delete(doubt)
+    
+    # 3. Submissions
+    subs = session.exec(select(Submission).where(Submission.student_username == username)).all()
+    for s in subs: session.delete(s)
+    
+    # 4. Assignments (if teacher) - must delete submissions first if assignment is deleted
+    asgs = session.exec(select(Assignment).where(Assignment.teacher_username == username)).all()
+    for a in asgs:
+        # Cleanup submissions for this assignment
+        a_subs = session.exec(select(Submission).where(Submission.assignment_id == a.id)).all()
+        for s in a_subs: session.delete(s)
+        session.delete(a)
+        
+    # 5. StudentFace
+    faces = session.exec(select(StudentFace).where(StudentFace.student_id == username)).all()
+    for f in faces: session.delete(f)
+    
+    # 6. Dispute
+    disps = session.exec(select(Dispute).where(Dispute.student_username == username)).all()
+    for d in disps: session.delete(d)
+    
+    # 7. AuditLog
+    logs = session.exec(select(AuditLog).where(AuditLog.actor_username == username)).all()
+    for l in logs: session.delete(l)
+    
+    # 8. Notification
+    notifs = session.exec(select(Notification).where(Notification.user_username == username)).all()
+    for n in notifs: session.delete(n)
+    
+    # 9. Resource
+    ress = session.exec(select(Resource).where(Resource.uploaded_by == username)).all()
+    for r in ress: session.delete(r)
+    
+    # 10. Schedule
+    schs = session.exec(select(Schedule).where(Schedule.teacher_username == username)).all()
+    for sch in schs: session.delete(sch)
+    
+    # 11. DirectMessages
+    dms = session.exec(select(DirectMessage).where((DirectMessage.sender_username == username) | (DirectMessage.recipient_username == username))).all()
+    for dm in dms: session.delete(dm)
+    
+    # 12. SubjectMark
+    marks = session.exec(select(SubjectMark).where(SubjectMark.student_username == username)).all()
+    for mk in marks: session.delete(mk)
+
+
+@router.post("/users")
+def admin_create_user(
+    data: AdminCreateUser,
+    current_user: User = Depends(allow_admin),
+    session: Session = Depends(get_session),
+):
+    existing = session.exec(select(User).where(User.username == data.username)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Username '{data.username}' already exists")
+    user = _create_single_user(data, session)
+    session.commit()
+    session.refresh(user)
+    return {"status": "created", "username": user.username, "id": user.id}
+
+
+@router.post("/users/batch", response_model=AdminBatchCreateResponse)
+def admin_batch_create_users(
+    req: AdminBatchCreateRequest,
+    current_user: User = Depends(allow_admin),
+    session: Session = Depends(get_session),
+):
+    existing_usernames = {
+        u.username for u in session.exec(select(User)).all()
+    }
+    created = []
+    skipped = []
+    for data in req.users:
+        if data.username in existing_usernames:
+            skipped.append(data.username)
+            continue
+        _create_single_user(data, session)
+        existing_usernames.add(data.username)
+        created.append(data.username)
+    session.commit()
+    return AdminBatchCreateResponse(created=created, skipped=skipped)
+
+
+@router.delete("/users/{user_id}")
+def admin_delete_user(
+    user_id: int,
+    current_user: User = Depends(allow_admin),
+    session: Session = Depends(get_session),
+):
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    
+    # Cleanup related data first
+    _cleanup_user_data(user.username, session)
+    
+    session.delete(user)
+    session.commit()
+    return {"status": "deleted", "username": user.username}
+
+
+@router.delete("/users/batch")
+def admin_batch_delete_users(
+    req: AdminBatchDeleteRequest,
+    current_user: User = Depends(allow_admin),
+    session: Session = Depends(get_session),
+):
+    deleted = []
+    for uid in req.user_ids:
+        if uid == current_user.id:
+            continue
+        user = session.get(User, uid)
+        if user:
+            deleted.append(user.username)
+            # Cleanup related data
+            _cleanup_user_data(user.username, session)
+            session.delete(user)
+    session.commit()
+    return {"status": "deleted", "deleted": deleted}
+
+
+@router.put("/users/{user_id}/role")
+def admin_update_role(
+    user_id: int,
+    req: AdminRoleUpdateRequest,
+    current_user: User = Depends(allow_admin),
+    session: Session = Depends(get_session),
+):
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.role = UserRole(req.role)
+    session.commit()
+    return {"status": "updated", "username": user.username, "role": user.role}
+
+
+@router.post("/users/{user_id}/reset-password")
+def admin_reset_password(
+    user_id: int,
+    current_user: User = Depends(allow_admin),
+    session: Session = Depends(get_session),
+):
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.password_hash = get_password_hash(DEFAULT_PASSWORD)
+    session.commit()
+    return {"status": "password_reset", "username": user.username}
+
+
+@router.get("/users/{username}/photo")
+def admin_get_user_photo(
+    username: str,
+    current_user: User = Depends(allow_admin),
+):
+    dataset_dir = os.getenv("DATASET_PATH")
+    if not dataset_dir:
+        dataset_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "dataset",
+        )
+    
+    photo_path = os.path.join(dataset_dir, username, "selfie.jpg")
+    if not os.path.exists(photo_path):
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    return FileResponse(photo_path)
 
 
 

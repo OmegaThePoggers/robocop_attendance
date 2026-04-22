@@ -22,8 +22,8 @@ from sqlmodel import Session
 
 logger = logging.getLogger(__name__)
 
-FACE_CONFIDENCE_CONFIRMED = 0.60
-FACE_CONFIDENCE_UNCERTAIN = 0.45
+FACE_CONFIDENCE_CONFIRMED = 0.38   # Lowered from 0.60 — group photo domain gap
+FACE_CONFIDENCE_UNCERTAIN = 0.25   # Lowered from 0.45
 
 
 class FaceMatcher:
@@ -51,12 +51,18 @@ class FaceMatcher:
         if index.size() == 0:
             return None, 0.0
 
-        results = index.search(embedding, k=1)
+        results = index.search(embedding, k=3)  # get top 3 for debug
         elapsed_ms = (time.perf_counter() - t0) * 1000
-        logger.debug("FAISS search: %.2f ms (class=%s)", elapsed_ms, class_id)
+        print(f"[MATCHER] FAISS search: {elapsed_ms:.2f}ms, class={class_id}, index_size={index.size()}")
 
         if not results:
+            print(f"[MATCHER] FAISS returned no results")
             return None, 0.0
+        
+        # Log top matches for debugging
+        for i, (sid, sim) in enumerate(results):
+            print(f"[MATCHER]   #{i+1}: {sid} → similarity={sim:.4f}")
+        
         student_id, similarity = results[0]
         return student_id, similarity
 
@@ -72,32 +78,49 @@ class FaceMatcher:
     ) -> Tuple[Optional[str], float]:
         """
         pgvector cosine-distance search scoped to students enrolled in class_id.
+        When class_id is "ALL", searches all students regardless of class.
         Similarity = 1 − cosine_distance  (higher is better, range [−1, 1]).
         """
         embedding_str = str(embedding.tolist())
 
         t0 = time.perf_counter()
-        result = db.execute(
-            text(
-                """
-                SELECT sf.student_id,
-                       1 - (sf.embedding <=> CAST(:emb AS vector)) AS similarity
-                FROM studentface sf
-                INNER JOIN "user" u ON u.username = sf.student_id
-                WHERE u.class_id = :class_id AND u.role = 'student'
-                ORDER BY sf.embedding <=> CAST(:emb AS vector)
-                LIMIT 1
-                """
-            ),
-            {"emb": embedding_str, "class_id": class_id},
-        )
+        if class_id == "ALL":
+            result = db.execute(
+                text(
+                    """
+                    SELECT sf.student_id,
+                           1 - (sf.embedding <=> CAST(:emb AS vector)) AS similarity
+                    FROM studentface sf
+                    ORDER BY sf.embedding <=> CAST(:emb AS vector)
+                    LIMIT 1
+                    """
+                ),
+                {"emb": embedding_str},
+            )
+        else:
+            result = db.execute(
+                text(
+                    """
+                    SELECT sf.student_id,
+                           1 - (sf.embedding <=> CAST(:emb AS vector)) AS similarity
+                    FROM studentface sf
+                    INNER JOIN "user" u ON u.username = sf.student_id
+                    WHERE u.class_id = :class_id AND u.role = 'student'
+                    ORDER BY sf.embedding <=> CAST(:emb AS vector)
+                    LIMIT 1
+                    """
+                ),
+                {"emb": embedding_str, "class_id": class_id},
+            )
         elapsed_ms = (time.perf_counter() - t0) * 1000
-        logger.debug("pgvector search: %.2f ms (class=%s)", elapsed_ms, class_id)
+        print(f"[MATCHER] pgvector search: {elapsed_ms:.2f}ms, class={class_id}")
 
         row = result.fetchone()
         if row is None:
+            print(f"[MATCHER] pgvector returned no results")
             return None, 0.0
         student_id, similarity = row
+        print(f"[MATCHER] pgvector best: {student_id} → similarity={float(similarity):.4f}")
         return student_id, float(similarity)
 
     # ------------------------------------------------------------------
@@ -118,10 +141,7 @@ class FaceMatcher:
         student_id, similarity = self._faiss_search(db, embedding, class_id)
 
         if student_id is None:
-            # FAISS index empty — use pgvector as authoritative source
-            logger.debug(
-                "FAISS index empty for class %s — falling back to pgvector", class_id
-            )
+            print(f"[MATCHER] FAISS empty for class={class_id}, falling back to pgvector")
             student_id, similarity = self._pgvector_search(db, embedding, class_id)
 
         return student_id, similarity

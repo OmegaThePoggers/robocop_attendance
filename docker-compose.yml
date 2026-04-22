@@ -31,13 +31,14 @@ services:
       # Mount static files to serve evidence/crops
       - ./backend/static:/app/static
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - PYTHONUNBUFFERED=1
       - DATASET_PATH=/app/dataset
       - DATABASE_URL=postgresql://robocop_user:robocop_password@db:5432/robocop_db
-      - SECRET_KEY=change-me-in-production
-      - ADMIN_DEFAULT_PASSWORD=robocop
       - ENVIRONMENT=development
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://0.0.0.0:3000
     depends_on:
       db:
         condition: service_healthy
